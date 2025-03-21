@@ -1,0 +1,29 @@
+{
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "C:\\Users\\username\\root_file_to_access"
+      ]
+    },
+    "github": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github"],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "your_github_personnal_token"
+      }
+    },
+    "gristdata": {
+      "command": "python",
+      "args": [
+        "C:\\Users\\username\\root_file_to_access\\mcp-server-grist-main\\grist_mcp_server.py"
+      ],
+      "env": {
+        "GRIST_API_KEY": "your_grist_api_key",
+        "GRIST_API_HOST": "https://grist.numerique.gouv.fr/api"
+      }
+    }
+  }
+}
