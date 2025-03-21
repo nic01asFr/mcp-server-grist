@@ -613,6 +613,15 @@ async def delete_grist_records(
 def main():
     """Run the MCP server"""
     logger.info(f"Starting Grist MCP Server v{__version__}")
+
+    # Importation et initialisation de l'outil de commandes de Noël
+    try:
+        import christmas_order_tool
+        # Initialisation des outils avec le mcp et la fonction get_client
+        christmas_tools = christmas_order_tool.init_christmas_tools(mcp, get_client)
+        logger.info("Module de commandes de Noël chargé avec succès")
+    except ImportError as e:
+        logger.error(f"Erreur lors de l'importation du module de commandes de Noël: {e}")
     
     # Log environment variables with sensitive info masked
     env_vars = {
