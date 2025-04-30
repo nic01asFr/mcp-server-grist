@@ -118,13 +118,22 @@ Ajoutez ceci à votre `claude_desktop_config.json` :
 ### Gestion des tables et colonnes
 - `list_tables` : Liste les tables
 - `list_columns` : Liste les colonnes
-- `list_records` : Liste les enregistrements
+- `list_records` : Liste les enregistrements avec tri et limite
 
 ### Manipulation des données
 - `add_grist_records` : Ajoute des enregistrements
 - `update_grist_records` : Met à jour des enregistrements
 - `delete_grist_records` : Supprime des enregistrements
-- `execute_sql_query` : Exécute une requête SQL (SELECT uniquement)
+
+### Filtrage et requêtes SQL
+- `filter_sql_query` : Requête SQL optimisée pour le filtrage simple
+  * Interface simplifiée pour les filtres courants
+  * Support du tri et de la limitation
+  * Conditions WHERE basiques
+- `execute_sql_query` : Requête SQL complexe
+  * Requêtes SQL personnalisées
+  * Support des JOIN et sous-requêtes
+  * Paramètres et timeout configurables
 
 ## Exemples d'utilisation
 
@@ -144,13 +153,40 @@ tables = await list_tables(doc_id="abc123")
 # Liste des colonnes
 columns = await list_columns(doc_id="abc123", table_id="Table1")
 
-# Liste des enregistrements avec filtrage
+# Liste des enregistrements avec tri et limite
 records = await list_records(
     doc_id="abc123",
     table_id="Table1",
-    filter_json='{"age": [">", 18]}',
     sort="name",
     limit=10
+)
+
+# Filtrage simple avec filter_sql_query
+filtered_records = await filter_sql_query(
+    doc_id="abc123",
+    table_id="Table1",
+    columns=["name", "age", "status"],
+    where_conditions={
+        "organisation": "OPSIA",
+        "status": "actif"
+    },
+    order_by="name",
+    limit=10
+)
+
+# Requête SQL complexe avec execute_sql_query
+sql_result = await execute_sql_query(
+    doc_id="abc123",
+    sql_query="""
+        SELECT t1.name, t1.age, t2.department
+        FROM Table1 t1
+        JOIN Table2 t2 ON t1.id = t2.employee_id
+        WHERE t1.status = ? AND t1.age > ?
+        ORDER BY t1.name
+        LIMIT ?
+    """,
+    parameters=["actif", 25, 10],
+    timeout_ms=2000
 )
 
 # Ajout d'enregistrements
@@ -166,14 +202,62 @@ updated_records = await update_grist_records(
     table_id="Table1",
     records=[{"id": 1, "name": "John", "age": 31}]
 )
-
-# Requête SQL
-sql_result = await execute_sql_query(
-    doc_id="abc123",
-    sql_query="SELECT * FROM Table1 WHERE age > ?",
-    parameters=[18]
-)
 ```
+
+## Cas d'utilisation détaillés
+
+### Fonctions de base
+- `list_organizations`, `list_workspaces`, `list_documents`
+  * Utilisez pour naviguer dans la structure de Grist
+  * Nécessaires pour obtenir les IDs des documents et tables
+  * Pas de paramètres complexes
+
+- `list_tables`, `list_columns`
+  * Utilisez pour explorer la structure d'un document
+  * Utiles pour connaître les noms des colonnes avant de faire des requêtes
+  * Pas de paramètres de filtrage
+
+- `list_records`
+  * Utilisez pour obtenir tous les enregistrements d'une table
+  * Tri simple sur une seule colonne (ex: "name" ou "-age")
+  * Limitation du nombre de résultats
+  * Ne supporte pas le filtrage (utilisez filter_sql_query à la place)
+
+### Fonctions de filtrage SQL
+- `filter_sql_query`
+  * Utilisez pour les filtres simples sur une seule table
+  * Conditions WHERE basiques (égalité, comparaison)
+  * Sélection de colonnes spécifiques
+  * Tri et limitation des résultats
+  * Exemple : filtrer les employés actifs d'une organisation
+
+- `execute_sql_query`
+  * Utilisez pour les requêtes complexes
+  * Jointures entre tables
+  * Sous-requêtes
+  * Agrégations (GROUP BY, HAVING)
+  * Paramètres SQL pour la sécurité
+  * Timeout personnalisable
+  * Exemple : rapports complexes avec jointures
+
+### Fonctions de manipulation
+- `add_grist_records`
+  * Utilisez pour créer de nouveaux enregistrements
+  * Format simple : liste de dictionnaires
+  * Pas besoin d'ID (générés automatiquement)
+  * Exemple : ajouter de nouveaux clients
+
+- `update_grist_records`
+  * Utilisez pour modifier des enregistrements existants
+  * Nécessite l'ID de chaque enregistrement
+  * Mise à jour partielle possible
+  * Exemple : mettre à jour les informations d'un client
+
+- `delete_grist_records`
+  * Utilisez pour supprimer des enregistrements
+  * Nécessite la liste des IDs à supprimer
+  * Opération irréversible
+  * Exemple : supprimer des enregistrements obsolètes
 
 ## Cas d'utilisation
 
