@@ -61,17 +61,65 @@ mcp = FastMCP(
     name="Grist API Client",
     version=__version__,
     instructions="""
-    Use this server to interact with the Grist API. 
-    You can list organizations, workspaces, documents, tables, columns, and records. 
-    You can also add, update, and delete records.
-    
-    Typical workflow:
-    1. List organizations with list_organizations
-    2. Get workspaces for an organization with list_workspaces
-    3. Get documents in a workspace with list_documents
-    4. Get tables in a document with list_tables
-    5. Get columns in a table with list_columns
-    6. Get, add, update or delete records with the corresponding tools
+    Vous êtes un assistant spécialisé dans l'interaction avec l'API Grist.
+    Vous pouvez utiliser les outils suivants pour interagir avec les données Grist :
+
+    1. Outils de listing :
+       - list_organizations : Liste toutes les organisations Grist accessibles
+       - list_workspaces : Liste les espaces de travail dans une organisation
+       - list_documents : Liste les documents dans un espace de travail
+       - list_tables : Liste les tables dans un document
+       - list_columns : Liste les colonnes dans une table
+       - list_records : Liste les enregistrements dans une table
+
+    2. Outils de gestion des enregistrements :
+       - add_grist_records : Ajoute des enregistrements à une table
+       - update_grist_records : Met à jour des enregistrements existants
+       - delete_grist_records : Supprime des enregistrements
+
+    3. Outils SQL pour le filtrage :
+       - filter_sql_query : Requête SQL optimisée pour le filtrage
+         * Utilisez pour les cas simples de filtrage
+         * Exemple : filter_sql_query(doc_id="doc", table_id="table", 
+                                    where_conditions={"organisation": "OPSIA"})
+         * Supporte le tri et la limitation des résultats
+       
+       - execute_sql_query : Requête SQL générale
+         * Utilisez pour les requêtes complexes
+         * Exemple : execute_sql_query(doc_id="doc", 
+                                     sql_query="SELECT * FROM Table WHERE status = ?",
+                                     parameters=["actif"])
+         * Supporte les paramètres et le timeout
+
+    Notes d'utilisation importantes :
+
+    1. Pour le filtrage des données :
+       - Utilisez filter_sql_query pour les filtres simples
+       - Utilisez execute_sql_query pour les requêtes complexes
+       - Les deux fonctions retournent les mêmes informations
+
+    2. Pour la suppression d'enregistrements (delete_grist_records) :
+       - Les IDs des enregistrements doivent être des entiers
+       - Fournissez toujours une liste d'IDs valides
+       - Vérifiez les IDs avant la suppression
+
+    3. Pour les requêtes SQL :
+       - Seules les requêtes SELECT sont autorisées
+       - Utilisez des paramètres pour éviter les injections SQL
+       - Le timeout par défaut est de 1000ms
+
+    4. Pour la gestion des erreurs :
+       - Tous les outils retournent un statut success/error
+       - Les messages d'erreur sont détaillés
+       - Consultez les logs pour plus d'informations
+
+    5. Bonnes pratiques :
+       - Privilégiez filter_sql_query pour le filtrage simple
+       - Utilisez execute_sql_query pour les requêtes complexes
+       - Vérifiez toujours les IDs avant les opérations
+       - Utilisez les paramètres SQL pour la sécurité
+       - Gérez les erreurs de manière appropriée
+       - Consultez la documentation pour les formats de données
     """
 )
 
@@ -231,13 +279,10 @@ class GristClient:
         return [GristColumn(**column) for column in data.get("columns", [])]
     
     async def list_records(self, doc_id: str, table_id: str, 
-                        filter_data: Optional[Dict[str, List[Any]]] = None, 
                         sort: Optional[str] = None,
                         limit: Optional[int] = None) -> List[GristRecord]:
-        """List records in a table with optional filtering, sorting, and limiting"""
+        """List records in a table with optional sorting and limiting"""
         params = {}
-        if filter_data:
-            params["filter"] = json.dumps(filter_data)
         if sort:
             params["sort"] = sort
         if limit and limit > 0:
@@ -318,63 +363,16 @@ class GristClient:
             return [record["id"] for record in formatted_records["records"]]
     
     async def delete_records(self, doc_id: str, table_id: str, record_ids: List[int]) -> None:
-        """Delete records from a table by their IDs
+        """Delete records from a table"""
+        logger.debug(f"Deleting records with IDs {record_ids} from table {table_id} in document {doc_id}")
         
-        Args:
-            doc_id: Grist document ID
-            table_id: Table ID
-            record_ids: List of record IDs to delete
-        """
-        if not record_ids:
-            logger.warning("No record IDs provided for deletion")
-            return
-            
-        logger.debug(f"Deleting {len(record_ids)} records from table {table_id} in document {doc_id}")
-        
-        try:
-            # First method: use data/delete endpoint with ID list
-            await self._request(
-                "POST",
-                f"/docs/{doc_id}/tables/{table_id}/data/delete",
-                json_data=record_ids
-            )
-            logger.info(f"{len(record_ids)} records successfully deleted (method 1)")
-            return
-        except Exception as e:
-            logger.warning(f"First deletion method failed: {e}")
-            
-            try:
-                # Second method: use records endpoint with DELETE method
-                formatted_records = {
-                    "records": [{"id": record_id} for record_id in record_ids]
-                }
-                
-                await self._request(
-                    "DELETE",
-                    f"/docs/{doc_id}/tables/{table_id}/records",
-                    json_data=formatted_records
-                )
-                logger.info(f"{len(record_ids)} records successfully deleted (method 2)")
-                return
-            except Exception as e2:
-                logger.warning(f"Second deletion method failed: {e2}")
-                
-                try:
-                    # Third method: use empty fields and PATCH endpoint
-                    formatted_records = {
-                        "records": [{"id": record_id, "fields": {}} for record_id in record_ids]
-                    }
-                    
-                    await self._request(
-                        "PATCH",
-                        f"/docs/{doc_id}/tables/{table_id}/records",
-                        json_data=formatted_records
-                    )
-                    logger.info(f"{len(record_ids)} records updated with empty fields (method 3)")
-                    return
-                except Exception as e3:
-                    logger.error(f"All deletion methods failed: {e3}")
-                    raise ValueError(f"Could not delete records. Errors: {e}, {e2}, {e3}")
+        # L'API Grist attend un tableau d'IDs directement
+        await self._request(
+            "POST",
+            f"/docs/{doc_id}/tables/{table_id}/data/delete",
+            json_data=record_ids  # Envoi direct de la liste d'IDs
+        )
+        logger.debug(f"Successfully deleted {len(record_ids)} records")
 
 
 # Get configuration from environment variables
@@ -481,41 +479,28 @@ async def list_columns(doc_id: str, table_id: str, ctx: Context) -> List[Dict[st
 async def list_records(
     doc_id: str, 
     table_id: str, 
-    filter_json: Optional[str] = None,
     sort: Optional[str] = None,
     limit: Optional[int] = None,
     ctx: Context = None
 ) -> List[Dict[str, Any]]:
     """
-    List records in a Grist table with optional filtering, sorting, and limiting.
+    Liste les enregistrements d'une table Grist avec tri et limitation optionnels.
     
     Args:
-        doc_id: The ID of the document containing the table
-        table_id: The ID of the table to list records from
-        filter_json: Optional JSON string for filtering records (e.g., '{"column_name": ["value1", "value2"]}')
-        sort: Optional comma-separated list of columns to sort by (prefix with '-' for descending order)
-        limit: Optional maximum number of records to return
+        doc_id: L'ID du document contenant la table
+        table_id: L'ID de la table à interroger
+        sort: Liste optionnelle de colonnes à trier (préfixer par '-' pour ordre décroissant)
+        limit: Nombre maximum optionnel d'enregistrements à retourner
         
     Returns:
-        A list of records with their IDs and field data
+        Une liste d'enregistrements avec leurs IDs et données
     """
-    logger.info(f"Tool called: list_records with doc_id: {doc_id}, table_id: {table_id}")
+    logger.info(f"Appel de l'outil list_records avec doc_id: {doc_id}, table_id: {table_id}")
     client = get_client(ctx)
-    
-    filter_data = None
-    if filter_json:
-        try:
-            filter_data = json.loads(filter_json)
-            logger.debug(f"Parsed filter_json: {filter_data}")
-        except json.JSONDecodeError as e:
-            error_msg = f"Invalid filter JSON: {filter_json}"
-            logger.error(f"{error_msg}: {e}")
-            raise ValueError(error_msg)
     
     records = await client.list_records(
         doc_id=doc_id,
         table_id=table_id,
-        filter_data=filter_data,
         sort=sort,
         limit=limit
     )
@@ -581,18 +566,33 @@ async def delete_grist_records(
     ctx: Context
 ) -> Dict[str, Any]:
     """
-    Supprime des enregistrements d'une table Grist.
+    Delete records from a Grist table.
     
     Args:
-        doc_id: L'ID du document Grist
-        table_id: L'ID de la table
-        record_ids: Liste des IDs des enregistrements à supprimer
+        doc_id: The ID of the Grist document
+        table_id: The ID of the table
+        record_ids: List of record IDs to delete
         
     Returns:
-        Un dictionnaire contenant le statut de l'opération et un message
+        A dictionary containing the operation status and a message
     """
-    logger.info(f"Tool called: delete_grist_records for doc_id: {doc_id}, table_id: {table_id}")
+    logger.info(f"Tool called: delete_grist_records for doc_id: {doc_id}, table_id: {table_id}, record_ids: {record_ids}")
     client = get_client(ctx)
+    
+    # Validate input data
+    if not record_ids:
+        return {
+            "success": False,
+            "message": "No record IDs provided for deletion",
+            "attempted_ids": []
+        }
+    
+    if not all(isinstance(record_id, int) for record_id in record_ids):
+        return {
+            "success": False,
+            "message": "All record IDs must be integers",
+            "attempted_ids": record_ids
+        }
     
     try:
         await client.delete_records(doc_id, table_id, record_ids)
@@ -608,6 +608,139 @@ async def delete_grist_records(
             "message": f"Error deleting records: {str(e)}",
             "attempted_ids": record_ids
         }
+
+
+@mcp.tool()
+async def filter_sql_query(
+    doc_id: str,
+    table_id: str,
+    columns: Optional[List[str]] = None,
+    where_conditions: Optional[Dict[str, Any]] = None,
+    order_by: Optional[str] = None,
+    limit: Optional[int] = None,
+    ctx: Context = None
+) -> Dict[str, Any]:
+    """
+    Exécute une requête SQL de filtrage sur une table Grist.
+    Cette fonction est optimisée pour les cas d'utilisation courants de filtrage.
+    
+    Args:
+        doc_id: ID du document
+        table_id: ID de la table à filtrer
+        columns: Liste des colonnes à sélectionner (toutes par défaut)
+        where_conditions: Conditions de filtrage sous forme de dictionnaire
+                         Exemple: {"organisation": "OPSIA", "status": "actif"}
+        order_by: Colonne pour le tri (optionnel)
+        limit: Nombre maximum de résultats (optionnel)
+        ctx: Contexte MCP
+        
+    Returns:
+        Résultats de la requête de filtrage
+    """
+    client = get_client(ctx)
+    
+    # Construction de la requête SQL
+    columns_str = "*" if not columns else ", ".join(columns)
+    sql_query = f"SELECT {columns_str} FROM {table_id}"
+    
+    # Ajout des conditions WHERE
+    if where_conditions:
+        conditions = []
+        for column, value in where_conditions.items():
+            if isinstance(value, str):
+                conditions.append(f"{column} = '{value}'")
+            else:
+                conditions.append(f"{column} = {value}")
+        sql_query += " WHERE " + " AND ".join(conditions)
+    
+    # Ajout du tri
+    if order_by:
+        sql_query += f" ORDER BY {order_by}"
+    
+    # Ajout de la limite
+    if limit:
+        sql_query += f" LIMIT {limit}"
+    
+    # Exécution de la requête
+    result = await client._request(
+        "POST",
+        f"/docs/{doc_id}/sql",
+        json_data={"sql": sql_query}
+    )
+    
+    return {
+        "success": True,
+        "message": "Requête de filtrage exécutée avec succès",
+        "doc_id": doc_id,
+        "table_id": table_id,
+        "query": sql_query,
+        "record_count": len(result.get("records", [])),
+        "records": result.get("records", [])
+    }
+
+
+@mcp.tool()
+async def execute_sql_query(
+    doc_id: str,
+    sql_query: str,
+    parameters: Optional[List[Any]] = None,
+    timeout_ms: Optional[int] = 1000,
+    ctx: Context = None
+) -> Dict[str, Any]:
+    """
+    Exécute une requête SQL générale sur un document Grist.
+    Cette fonction est destinée aux requêtes SQL complexes et personnalisées.
+    
+    Args:
+        doc_id: ID du document
+        sql_query: Requête SQL à exécuter (SELECT uniquement)
+        parameters: Paramètres pour la requête SQL (optionnel)
+        timeout_ms: Délai d'expiration en millisecondes (1000 par défaut)
+        ctx: Contexte MCP
+        
+    Returns:
+        Résultats de la requête SQL
+    """
+    client = get_client(ctx)
+    
+    # Nettoyage basique de la requête SQL
+    sql_query = sql_query.strip()
+    if sql_query.endswith(";"):
+        sql_query = sql_query[:-1]
+    
+    # Vérification de sécurité basique
+    if not sql_query.lower().startswith(("select", "with")):
+        return {
+            "success": False,
+            "message": "Seules les requêtes SELECT (avec clause WITH optionnelle) sont autorisées",
+            "doc_id": doc_id
+        }
+    
+    # Préparation des données pour la requête SQL
+    query_params = {
+        "sql": sql_query
+    }
+    
+    if parameters:
+        query_params["args"] = parameters
+    
+    if timeout_ms:
+        query_params["timeout"] = timeout_ms
+    
+    result = await client._request(
+        "POST",
+        f"/docs/{doc_id}/sql",
+        json_data=query_params
+    )
+    
+    return {
+        "success": True,
+        "message": "Requête SQL exécutée avec succès",
+        "doc_id": doc_id,
+        "query": sql_query,
+        "record_count": len(result.get("records", [])),
+        "records": result.get("records", [])
+    }
 
 
 def main():
@@ -654,7 +787,7 @@ def main():
         tools_result = register_all_tools(mcp, get_client)
         logger.info(f"Outils supplémentaires enregistrés: {tools_result.get('message', '')}")
     except Exception as e:
-        logger.error(f"Erreur lors de l'enregistrement des outils supplémentaires: {e}")
+        logger.warning(f"Module d'outils supplémentaires non disponible: {e}")
     
     # Test connection to Grist API
     try:
