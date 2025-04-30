@@ -25,7 +25,6 @@ setup(
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
-        "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
     python_requires=">=3.8",
@@ -39,4 +38,5 @@ setup(
         "Bug Reports": "https://github.com/modelcontextprotocol/server-grist/issues",
         "Source": "https://github.com/modelcontextprotocol/server-grist",
     },
+    license="MIT",
 )
