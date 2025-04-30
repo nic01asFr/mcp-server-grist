@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mcp-server-grist"
+version = "1.0.0"
+description = "MCP server for Grist API integration"
+readme = "README.md"
+authors = [{ name = "MCP Contributors", email = "info@example.com" }]
+license = "MIT"
+requires-python = ">=3.8"
+dependencies = [
+    "fastmcp>=0.3.0",
+    "httpx>=0.24.0",
+    "pydantic>=2.0.0",
+    "python-dotenv>=1.0.0",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+Homepage = "https://github.com/modelcontextprotocol/server-grist"
+"Bug Reports" = "https://github.com/modelcontextprotocol/server-grist/issues"
+Source = "https://github.com/modelcontextprotocol/server-grist"
+
+[project.scripts]
+mcp-server-grist = "grist_mcp_server:main" 
