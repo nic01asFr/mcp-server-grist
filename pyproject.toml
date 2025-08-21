@@ -7,8 +7,8 @@ name = "mcp-server-grist"
 version = "1.0.0"
 description = "MCP server for Grist API integration"
 readme = "README.md"
-authors = [{ name = "MCP Contributors", email = "info@example.com" }]
-license = "MIT"
+authors = [{ name = "Nicolas Francart", email = "nic01asFr@users.noreply.github.com" }]
+license = { text = "MIT" }
 requires-python = ">=3.8"
 dependencies = [
     "fastmcp>=0.3.0",
@@ -16,22 +16,29 @@ dependencies = [
     "pydantic>=2.0.0",
     "python-dotenv>=1.0.0",
 ]
+keywords = ["mcp", "grist", "api", "model-context-protocol"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
     "Topic :: Software Development :: Libraries :: Python Modules",
+    "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
     "Operating System :: OS Independent",
 ]
 
 [project.urls]
-Homepage = "https://github.com/modelcontextprotocol/server-grist"
-"Bug Reports" = "https://github.com/modelcontextprotocol/server-grist/issues"
-Source = "https://github.com/modelcontextprotocol/server-grist"
+Homepage = "https://github.com/nic01asFr/mcp-server-grist"
+"Bug Reports" = "https://github.com/nic01asFr/mcp-server-grist/issues"
+Source = "https://github.com/nic01asFr/mcp-server-grist"
+Documentation = "https://github.com/nic01asFr/mcp-server-grist#readme"
 
 [project.scripts]
-mcp-server-grist = "grist_mcp_server:main" 
+mcp-server-grist = "grist_mcp_server:main"
+
+[tool.setuptools]
+py-modules = ["grist_mcp_server"]
