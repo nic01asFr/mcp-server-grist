@@ -1,0 +1,241 @@
+---
+title: "Référence des outils"
+description: "Documentation détaillée des outils MCP Grist"
+---
+
+# Référence des outils MCP Grist
+
+Ce document fournit une référence détaillée de tous les outils disponibles dans le serveur MCP Grist.
+
+## Navigation
+
+### list_organizations
+
+Liste toutes les organisations Grist accessibles.
+
+```python
+async def list_organizations(ctx=None) -> Dict[str, Any]:
+    """
+    Liste toutes les organisations Grist accessibles.
+    
+    Prérequis:
+        Aucun - ce tool est le point d'entrée principal pour la navigation.
+    
+    Returns:
+        Dict avec:
+            - success (bool): Indique si l'opération a réussi
+            - message (str): Message de succès ou d'erreur
+            - organizations (List): Liste des organisations disponibles
+    """
+```
+
+### describe_organization
+
+Obtient des informations détaillées sur une organisation spécifique.
+
+```python
+async def describe_organization(org_id: Union[int, str], ctx) -> Dict[str, Any]:
+    """
+    Obtient des informations détaillées sur une organisation spécifique.
+    
+    Args:
+        org_id: L'ID de l'organisation à décrire
+        
+    Returns:
+        Dict avec:
+            - success (bool): Indique si l'opération a réussi
+            - message (str): Message de succès ou d'erreur
+            - organization (Dict): Détails de l'organisation
+    """
+```
+
+### list_workspaces
+
+Liste tous les espaces de travail dans une organisation Grist.
+
+```python
+async def list_workspaces(org_id: Union[int, str], ctx) -> Dict[str, Any]:
+    """
+    Liste tous les espaces de travail dans une organisation Grist.
+    
+    Args:
+        org_id: L'ID de l'organisation (entier ou sous-domaine string)
+        
+    Returns:
+        Dict avec:
+            - success (bool): Indique si l'opération a réussi
+            - message (str): Message de succès ou d'erreur
+            - workspaces (List): Liste des espaces de travail
+    """
+```
+
+## Requêtes SQL
+
+### execute_sql_query
+
+Exécute une requête SQL personnalisée sur un document Grist.
+
+```python
+async def execute_sql_query(
+    doc_id: str,
+    sql_query: str,
+    parameters: Optional[List[Any]] = None,
+    timeout_ms: Optional[int] = 1000,
+    ctx=None
+) -> Dict[str, Any]:
+    """
+    Exécute une requête SQL personnalisée sur un document Grist.
+    
+    Args:
+        doc_id: ID du document
+        sql_query: Requête SQL à exécuter (SELECT uniquement)
+        parameters: Liste des paramètres pour les placeholders '?' dans la requête
+        timeout_ms: Délai d'expiration en millisecondes (défaut: 1000)
+        
+    Returns:
+        Dict avec les résultats de la requête et métadonnées
+    """
+```
+
+### filter_sql_query
+
+Exécute une requête SQL de filtrage sur une table Grist.
+
+```python
+async def filter_sql_query(
+    doc_id: str,
+    table_id: str,
+    columns: Optional[List[str]] = None,
+    where_conditions: Optional[Dict[str, Any]] = None,
+    order_by: Optional[str] = None,
+    limit: Optional[int] = None,
+    ctx=None
+) -> Dict[str, Any]:
+    """
+    Exécute une requête SQL de filtrage sur une table Grist.
+    
+    Args:
+        doc_id: ID du document
+        table_id: ID de la table à requêter
+        columns: Liste des colonnes à retourner (None = toutes)
+        where_conditions: Dict de conditions (AND implicite entre conditions)
+        order_by: Colonne de tri avec direction optionnelle (ex: "nom DESC")
+        limit: Nombre max de résultats
+        
+    Returns:
+        Dict avec les enregistrements filtrés et métadonnées de requête
+    """
+```
+
+## Enregistrements
+
+### add_grist_records
+
+Ajoute des enregistrements à une table Grist.
+
+```python
+async def add_grist_records(
+    doc_id: str,
+    table_id: str,
+    records: List[Dict[str, Any]],
+    ctx=None
+) -> Dict[str, Any]:
+    """
+    Ajoute des enregistrements à une table Grist.
+    
+    Args:
+        doc_id: L'ID du document Grist
+        table_id: L'ID de la table
+        records: Liste des enregistrements à ajouter
+                
+    Returns:
+        Dict avec statut, message et IDs des enregistrements créés
+    """
+```
+
+## Webhooks
+
+### create_webhook
+
+Crée un webhook pour un document Grist.
+
+```python
+async def create_webhook(
+    doc_id: str,
+    url: str,
+    table_id: Optional[str] = None,
+    event_types: Optional[List[str]] = None,
+    memo: Optional[str] = None,
+    ctx=None
+) -> Dict[str, Any]:
+    """
+    Crée un webhook pour un document Grist.
+    
+    Args:
+        doc_id: L'ID du document
+        url: URL du webhook (où les notifications seront envoyées)
+        table_id: ID de la table à surveiller (optionnel, tous si non spécifié)
+        event_types: Types d'événements à surveiller (optionnel, tous si non spécifié)
+                    Valeurs possibles: ["add", "update", "delete"]
+        memo: Note descriptive pour le webhook (optionnel)
+        
+    Returns:
+        Dict avec statut, message et ID du webhook créé
+    """
+```
+
+## Flux de travail typiques
+
+### Navigation dans la hiérarchie Grist
+
+```python
+# 1. Lister les organisations
+orgs = await list_organizations()
+
+# 2. Choisir une organisation et lister ses espaces de travail
+org_id = orgs["organizations"][0]["id"]
+workspaces = await list_workspaces(org_id)
+
+# 3. Choisir un espace de travail et lister ses documents
+workspace_id = workspaces["workspaces"][0]["id"]
+documents = await list_documents(workspace_id)
+
+# 4. Choisir un document et lister ses tables
+doc_id = documents["documents"][0]["id"]
+tables = await list_tables(doc_id)
+
+# 5. Choisir une table et lister ses colonnes
+table_id = tables["tables"][0]["id"]
+columns = await list_columns(doc_id, table_id)
+```
+
+### Manipulation de données
+
+```python
+# 1. Ajouter des enregistrements
+result = await add_grist_records(
+    doc_id="abcd1234",
+    table_id="Tasks",
+    records=[
+        {"Title": "Nouvelle tâche", "Status": "À faire"},
+        {"Title": "Autre tâche", "Status": "En cours"}
+    ]
+)
+
+# 2. Mettre à jour des enregistrements
+update_result = await update_grist_records(
+    doc_id="abcd1234",
+    table_id="Tasks",
+    records=[
+        {"id": 1, "Status": "Terminé"},
+        {"id": 2, "Status": "Terminé"}
+    ]
+)
+
+# 3. Supprimer des enregistrements
+delete_result = await delete_grist_records(
+    doc_id="abcd1234",
+    table_id="Tasks",
+    record_ids=[3, 4]
+)
+```

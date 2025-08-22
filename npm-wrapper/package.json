@@ -1,0 +1,22 @@
+{
+  "name": "@modelcontextprotocol/server-grist",
+  "version": "0.1.0",
+  "description": "Serveur MCP pour l'API Grist",
+  "main": "bin/start.js",
+  "bin": {
+    "mcp-server-grist": "./bin/start.js"
+  },
+  "scripts": {
+    "start": "node ./bin/start.js"
+  },
+  "keywords": [
+    "mcp",
+    "grist",
+    "modelcontextprotocol"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "find-free-port": "^2.0.0"
+  }
+}

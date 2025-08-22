@@ -1,0 +1,40 @@
+version: '3'
+
+services:
+  # Service en mode stdio (utilisé pour tester via des processus locaux)
+  grist-mcp-stdio:
+    build: .
+    environment:
+      - GRIST_API_KEY=${GRIST_API_KEY}
+      - GRIST_API_HOST=${GRIST_API_HOST:-https://docs.getgrist.com/api}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    stdin_open: true  # Requis pour l'entrée STDIO
+    tty: true        # Permet de maintenir le conteneur actif
+    command: ["--transport", "stdio"]
+
+  # Service en mode streamable-http (pour API web moderne)
+  grist-mcp-http:
+    build: .
+    ports:
+      - "${HTTP_PORT:-8000}:8000"
+    environment:
+      - GRIST_API_KEY=${GRIST_API_KEY}
+      - GRIST_API_HOST=${GRIST_API_HOST:-https://docs.getgrist.com/api}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    command: ["--transport", "streamable-http", "--host", "0.0.0.0", "--port", "8000", "--path", "/mcp"]
+
+  # Service en mode SSE (pour compatibilité avec clients SSE)
+  grist-mcp-sse:
+    build: .
+    ports:
+      - "${SSE_PORT:-8001}:8000"
+    environment:
+      - GRIST_API_KEY=${GRIST_API_KEY}
+      - GRIST_API_HOST=${GRIST_API_HOST:-https://docs.getgrist.com/api}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    command: ["--transport", "sse", "--host", "0.0.0.0", "--port", "8000", "--mount-path", "/sse"]
+
+# Ce réseau permettra à d'autres conteneurs de se connecter au serveur MCP
+networks:
+  mcp-network:
+    driver: bridge 

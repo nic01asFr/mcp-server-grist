@@ -1,0 +1,156 @@
+---
+title: "MCP Server Grist"
+description: "Serveur MCP pour l'API Grist"
+---
+
+# MCP Server Grist
+
+Le serveur MCP Grist permet aux modèles de langage d'interagir avec l'API Grist pour accéder et manipuler des données structurées dans des documents Grist.
+
+## Quand utiliser
+
+Utilisez ce serveur MCP lorsque vous souhaitez :
+
+- Accéder à des données structurées stockées dans Grist
+- Créer, modifier ou supprimer des enregistrements dans des tables Grist
+- Exécuter des requêtes SQL sur vos données Grist
+- Gérer des documents, espaces de travail et organisations Grist
+
+## Prérequis
+
+Pour utiliser ce serveur MCP, vous aurez besoin de :
+
+- Une clé API Grist valide
+- L'URL de l'API Grist (par défaut : `https://docs.getgrist.com/api`)
+- Python 3.8 ou supérieur
+
+## Installation
+
+```bash
+pip install mcp-server-grist
+```
+
+## Configuration
+
+### Configuration avec Claude Desktop
+
+1. Modifiez votre fichier `mcp_servers.json` pour inclure :
+
+```json
+{
+  "mcpServers": {
+    "grist-mcp": {
+      "command": "node",
+      "args": [
+        "chemin/vers/npm-wrapper/bin/start.js"
+      ],
+      "env": {
+        "GRIST_API_KEY": "votre_clé_api_grist",
+        "GRIST_API_URL": "https://docs.getgrist.com/api"
+      }
+    }
+  }
+}
+```
+
+2. Remplacez `chemin/vers/npm-wrapper/bin/start.js` par le chemin absolu vers le script `start.js` du wrapper Node.js inclus dans ce package.
+
+### Configuration manuelle
+
+Vous pouvez également démarrer le serveur manuellement :
+
+```bash
+# Définir les variables d'environnement
+export GRIST_API_KEY="votre_clé_api_grist"
+export GRIST_API_URL="https://docs.getgrist.com/api"
+
+# Démarrer le serveur
+mcp-server-grist --transport stdio
+```
+
+## Outils disponibles
+
+Le serveur MCP Grist fournit plus de 50 outils organisés en catégories :
+
+### Navigation (10 outils)
+- `list_organizations` - Liste toutes les organisations accessibles
+- `describe_organization` - Obtient des détails sur une organisation
+- `list_workspaces` - Liste les espaces de travail d'une organisation
+- Et plus...
+
+### Requêtes (2 outils)
+- `execute_sql_query` - Exécute une requête SQL personnalisée
+- `filter_sql_query` - Filtre les données avec une interface simplifiée
+
+### Enregistrements (4 outils)
+- `add_grist_records` - Ajoute des enregistrements à une table
+- `update_grist_records` - Met à jour des enregistrements existants
+- Et plus...
+
+### Administration (16 outils)
+- `create_workspace` - Crée un nouvel espace de travail
+- `modify_document` - Modifie les propriétés d'un document
+- Et plus...
+
+### Gestion des accès (6 outils)
+- `list_organization_access` - Liste les accès à une organisation
+- `modify_document_access` - Modifie les droits d'accès à un document
+- Et plus...
+
+### Export (3 outils)
+- `download_document_sqlite` - Télécharge un document au format SQLite
+- `download_document_excel` - Télécharge un document au format Excel
+- Et plus...
+
+### Pièces jointes (4 outils)
+- `list_attachments` - Liste les pièces jointes d'un document
+- `upload_attachment` - Téléverse une pièce jointe
+- Et plus...
+
+### Webhooks (5 outils)
+- `list_webhooks` - Liste les webhooks d'un document
+- `create_webhook` - Crée un nouveau webhook
+- Et plus...
+
+## Exemples d'utilisation
+
+### Lister les organisations
+
+```python
+await list_organizations()
+```
+
+### Exécuter une requête SQL
+
+```python
+await execute_sql_query(
+    doc_id="abcd1234",
+    sql_query="SELECT * FROM Tasks WHERE Status = ?",
+    parameters=["Completed"]
+)
+```
+
+### Ajouter des enregistrements
+
+```python
+await add_grist_records(
+    doc_id="abcd1234",
+    table_id="Tasks",
+    records=[
+        {"Title": "Nouvelle tâche", "Status": "À faire"},
+        {"Title": "Autre tâche", "Status": "En cours"}
+    ]
+)
+```
+
+## Dépannage
+
+Si vous rencontrez des problèmes :
+
+1. Vérifiez que votre clé API Grist est valide
+2. Assurez-vous que l'URL de l'API est correcte
+3. Consultez les logs du serveur pour plus de détails
+
+## Contribuer
+
+Les contributions sont les bienvenues ! Consultez notre [guide de contribution](https://github.com/modelcontextprotocol/mcp-server-grist/blob/main/CONTRIBUTING.md) pour plus d'informations.

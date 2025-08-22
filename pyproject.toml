@@ -1,0 +1,67 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mcp-server-grist"
+dynamic = ["version"]
+description = "MCP server for Grist API integration"
+readme = "README.md"
+authors = [{ name = "MCP Contributors", email = "info@example.com" }]
+license = "MIT"
+requires-python = ">=3.8"
+dependencies = [
+    "fastmcp>=2.8.0",
+    "mcp>=1.9.4",
+    "httpx>=0.24.0",
+    "pydantic>=2.0.0",
+    "python-dotenv>=1.0.0",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Operating System :: OS Independent",
+    "Framework :: MCP",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Information Technology",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+
+[project.urls]
+Homepage = "https://github.com/modelcontextprotocol/mcp-server-grist"
+Documentation = "https://github.com/modelcontextprotocol/mcp-server-grist/blob/main/README.md"
+"Bug Reports" = "https://github.com/modelcontextprotocol/mcp-server-grist/issues"
+Source = "https://github.com/modelcontextprotocol/mcp-server-grist"
+
+[project.scripts]
+mcp-server-grist = "mcp_server_grist:main"
+
+[tool.setuptools.dynamic]
+version = {attr = "mcp_server_grist.version.__version__"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = "test_*.py"
+asyncio_mode = "auto"
+
+[tool.black]
+line-length = 100
+target-version = ['py38']
+
+[tool.isort]
+profile = "black"
+line_length = 100
+
+[tool.mypy]
+python_version = "3.8"
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
