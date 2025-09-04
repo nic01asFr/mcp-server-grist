@@ -1,0 +1,55 @@
+name: First Upload to PyPI (with Token)
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type "CONFIRM" to proceed with first upload'
+        required: true
+        default: ''
+
+jobs:
+  first-upload:
+    runs-on: ubuntu-latest
+    if: github.event.inputs.confirm == 'CONFIRM'
+    
+    steps:
+    - name: Checkout official branch
+      uses: actions/checkout@v4
+      with:
+        ref: official
+        fetch-depth: 0
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install build twine
+    
+    - name: Build package
+      run: |
+        echo "Building package for first upload..."
+        python -m build
+    
+    - name: List built files
+      run: |
+        echo "Built files:"
+        ls -la dist/
+    
+    - name: First upload with API Token
+      env:
+        TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
+        TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+      run: |
+        echo "Uploading to PyPI for the first time..."
+        twine upload dist/*
+    
+    - name: Success notification
+      run: |
+        echo "✅ First upload successful!"
+        echo "Now you can configure Trusted Publishers on PyPI"
+        echo "📦 Package: https://pypi.org/project/mcp-server-grist/"
