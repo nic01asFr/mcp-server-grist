@@ -1,0 +1,44 @@
+name: Debug PyPI Authentication
+
+on:
+  workflow_dispatch:
+    inputs:
+      debug:
+        description: 'Type "DEBUG" to check configuration'
+        required: true
+        default: ''
+
+jobs:
+  debug:
+    runs-on: ubuntu-latest
+    if: github.event.inputs.debug == 'DEBUG'
+    
+    steps:
+    - name: Check secrets configuration
+      env:
+        TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
+        TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+      run: |
+        echo "=== PyPI Authentication Debug ==="
+        echo "Username configured: $([ -n "$TWINE_USERNAME" ] && echo "✅ YES" || echo "❌ NO")"
+        echo "Password configured: $([ -n "$TWINE_PASSWORD" ] && echo "✅ YES" || echo "❌ NO")"
+        echo "Username value: $TWINE_USERNAME"
+        echo "Password length: ${#TWINE_PASSWORD}"
+        echo "Password prefix: ${TWINE_PASSWORD:0:10}..."
+        
+        if [ "$TWINE_USERNAME" != "__token__" ]; then
+          echo "❌ PYPI_USERNAME should be '__token__'"
+          exit 1
+        fi
+        
+        if [ ${#TWINE_PASSWORD} -lt 50 ]; then
+          echo "❌ PYPI_PASSWORD seems too short (< 50 chars)"
+          exit 1
+        fi
+        
+        if [[ ! "$TWINE_PASSWORD" == pypi-* ]]; then
+          echo "❌ PYPI_PASSWORD should start with 'pypi-'"
+          exit 1
+        fi
+        
+        echo "✅ Configuration looks correct"
