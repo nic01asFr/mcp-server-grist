@@ -23,6 +23,13 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    
+    # Configuration pour Trusted Publishers
+    environment: release
+    permissions:
+      id-token: write  # IMPORTANT pour Trusted Publishers
+      contents: read
+    
     steps:
     - name: Checkout official branch
       uses: actions/checkout@v4
@@ -38,7 +45,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install build twine
+        pip install build
     
     - name: Get version info
       id: version
@@ -64,26 +71,19 @@ jobs:
     - name: Build package
       run: |
         echo "Building package from official branch..."
+        echo "Version: ${{ steps.version.outputs.version }}"
+        echo "Trigger: ${{ steps.version.outputs.trigger }}"
         python -m build
-    
-    - name: Check package
-      run: |
-        echo "Checking package integrity..."
-        twine check dist/*
     
     - name: List built files
       run: |
         echo "Built files:"
         ls -la dist/
     
-    - name: Publish to PyPI
-      env:
-        TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
-        TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
-      run: |
-        echo "Publishing version ${{ steps.version.outputs.version }} (triggered by ${{ steps.version.outputs.trigger }})"
-        echo "Publishing from official branch to PyPI..."
-        twine upload dist/*
+    - name: Publish to PyPI using Trusted Publishers
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        print: true  # Affiche les informations de débogage
     
     - name: Success notification
       run: |
