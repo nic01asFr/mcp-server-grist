@@ -1,0 +1,82 @@
+name: Enhanced Publish to PyPI
+
+on:
+  # Déclenchement par release (standard)
+  release:
+    types: [created, published]
+  
+  # Déclenchement par tag (alternative si la release ne fonctionne pas)
+  push:
+    tags:
+      - 'v*'
+  
+  # Déclenchement manuel
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to publish (leave empty to use current)'
+        required: false
+        default: ''
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install build twine
+    
+    - name: Get version info
+      id: version
+      run: |
+        if [ "${{ github.event_name }}" = "release" ]; then
+          echo "version=${{ github.event.release.tag_name }}" >> $GITHUB_OUTPUT
+          echo "trigger=release" >> $GITHUB_OUTPUT
+        elif [ "${{ github.event_name }}" = "push" ] && [[ "${{ github.ref }}" == refs/tags/* ]]; then
+          echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+          echo "trigger=tag" >> $GITHUB_OUTPUT
+        elif [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+          if [ -n "${{ inputs.version }}" ]; then
+            echo "version=${{ inputs.version }}" >> $GITHUB_OUTPUT
+          else
+            echo "version=$(python -c "from src.mcp_server_grist.version import __version__; print(__version__)")" >> $GITHUB_OUTPUT
+          fi
+          echo "trigger=manual" >> $GITHUB_OUTPUT
+        else
+          echo "version=unknown" >> $GITHUB_OUTPUT
+          echo "trigger=unknown" >> $GITHUB_OUTPUT
+        fi
+    
+    - name: Build package
+      run: python -m build
+    
+    - name: Check package
+      run: twine check dist/*
+    
+    - name: Publish to PyPI
+      env:
+        TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
+        TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+      run: |
+        echo "Publishing version ${{ steps.version.outputs.version }} (triggered by ${{ steps.version.outputs.trigger }})"
+        twine upload dist/*
+    
+    - name: Create GitHub Release (if triggered by tag)
+      if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: ${{ steps.version.outputs.version }}
+        name: Release ${{ steps.version.outputs.version }}
+        draft: false
+        prerelease: false
+        generate_release_notes: true
