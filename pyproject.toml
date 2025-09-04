@@ -27,17 +27,18 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Operating System :: OS Independent",
-    "Framework :: MCP",
     "Intended Audience :: Science/Research",
     "Intended Audience :: Information Technology",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Communications",
+    "Topic :: Internet",
 ]
 
 [project.urls]
-Homepage = "https://github.com/modelcontextprotocol/mcp-server-grist"
-Documentation = "https://github.com/modelcontextprotocol/mcp-server-grist/blob/main/README.md"
-"Bug Reports" = "https://github.com/modelcontextprotocol/mcp-server-grist/issues"
-Source = "https://github.com/modelcontextprotocol/mcp-server-grist"
+Homepage = "https://github.com/nic01asFr/mcp-server-grist"
+Documentation = "https://github.com/nic01asFr/mcp-server-grist/blob/main/README.md"
+"Bug Reports" = "https://github.com/nic01asFr/mcp-server-grist/issues"
+Source = "https://github.com/nic01asFr/mcp-server-grist"
 
 [project.scripts]
 mcp-server-grist = "mcp_server_grist:main"
