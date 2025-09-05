@@ -1,0 +1,91 @@
+name: Publish to PyPI
+
+on:
+  # Déclenchement par release
+  release:
+    types: [created, published]
+  
+  # Déclenchement par tag sur la branche official
+  push:
+    branches:
+      - official
+    tags:
+      - 'v*'
+  
+  # Déclenchement manuel
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to publish (leave empty to use current)'
+        required: false
+        default: ''
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    # Configuration pour Trusted Publishers
+    environment: release
+    permissions:
+      id-token: write  # IMPORTANT pour Trusted Publishers
+      contents: read
+    
+    steps:
+    - name: Checkout official branch
+      uses: actions/checkout@v4
+      with:
+        ref: official
+        fetch-depth: 0
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install build
+    
+    - name: Get version info
+      id: version
+      run: |
+        if [ "${{ github.event_name }}" = "release" ]; then
+          echo "version=${{ github.event.release.tag_name }}" >> $GITHUB_OUTPUT
+          echo "trigger=release" >> $GITHUB_OUTPUT
+        elif [ "${{ github.event_name }}" = "push" ] && [[ "${{ github.ref }}" == refs/tags/* ]]; then
+          echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+          echo "trigger=tag" >> $GITHUB_OUTPUT
+        elif [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+          if [ -n "${{ inputs.version }}" ]; then
+            echo "version=${{ inputs.version }}" >> $GITHUB_OUTPUT
+          else
+            echo "version=$(python -c "from src.mcp_server_grist.version import __version__; print(__version__)")" >> $GITHUB_OUTPUT
+          fi
+          echo "trigger=manual" >> $GITHUB_OUTPUT
+        else
+          echo "version=unknown" >> $GITHUB_OUTPUT
+          echo "trigger=unknown" >> $GITHUB_OUTPUT
+        fi
+    
+    - name: Build package
+      run: |
+        echo "Building package from official branch..."
+        echo "Version: ${{ steps.version.outputs.version }}"
+        echo "Trigger: ${{ steps.version.outputs.trigger }}"
+        python -m build
+    
+    - name: List built files
+      run: |
+        echo "Built files:"
+        ls -la dist/
+    
+    - name: Publish to PyPI using Trusted Publishers
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        print: true  # Affiche les informations de débogage
+    
+    - name: Success notification
+      run: |
+        echo "✅ Successfully published mcp-server-grist version ${{ steps.version.outputs.version }} to PyPI!"
+        echo "📦 Package should be available at: https://pypi.org/project/mcp-server-grist/"
