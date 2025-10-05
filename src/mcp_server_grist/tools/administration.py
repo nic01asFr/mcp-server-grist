@@ -728,19 +728,21 @@ async def create_column(
             "columns": [
                 {
                     "id": column_id,
-                    "type": column_type
+                    "fields":{
+                        "type": column_type
+                    }
                 }
             ]
         }
         
         # Ajouter les champs optionnels s'ils sont fournis
         if label:
-            column_data["columns"][0]["label"] = label
+            column_data["columns"][0]["fields"]["label"] = label
         if formula:
-            column_data["columns"][0]["formula"] = formula
-            column_data["columns"][0]["isFormula"] = True
+            column_data["columns"][0]["fields"]["formula"] = formula
+            column_data["columns"][0]["fields"]["isFormula"] = True
         if widget_options:
-            column_data["columns"][0]["widgetOptions"] = widget_options
+            column_data["columns"][0]["fields"]["widgetOptions"] = widget_options
         
         result = await client.create_columns(doc_id, table_id, column_data)
         
@@ -800,7 +802,8 @@ async def modify_column(
         column_data = {
             "columns": [
                 {
-                    "id": column_id
+                    "id": column_id,
+                    "fields": {} 
                 }
             ]
         }
@@ -809,14 +812,14 @@ async def modify_column(
         if new_column_id:
             column_data["columns"][0]["newId"] = new_column_id
         if column_type:
-            column_data["columns"][0]["type"] = column_type
+            column_data["columns"][0]["fields"]["type"] = column_type
         if label:
-            column_data["columns"][0]["label"] = label
+            column_data["columns"][0]["fields"]["label"] = label
         if formula is not None:  # Permettre de vider la formule avec une chaîne vide
-            column_data["columns"][0]["formula"] = formula
-            column_data["columns"][0]["isFormula"] = bool(formula)
+            column_data["columns"][0]["fields"]["formula"] = formula
+            column_data["columns"][0]["fields"]["isFormula"] = bool(formula)
         if widget_options:
-            column_data["columns"][0]["widgetOptions"] = widget_options
+            column_data["columns"][0]["fields"]["widgetOptions"] = widget_options
         
         await client.modify_columns(doc_id, table_id, column_data)
         
