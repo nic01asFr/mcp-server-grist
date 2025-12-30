@@ -8,6 +8,8 @@ organisations, espaces de travail, documents, tables, colonnes et enregistrement
 import logging
 from typing import Any, Dict, List, Optional, Union
 
+from fastmcp import Context
+
 from ..client import get_client
 from ..models import MCP_Response
 
@@ -34,7 +36,7 @@ def register_navigation_tools(mcp_server):
     mcp_server.tool()(get_table_schema)
 
 
-async def list_organizations(ctx) -> Dict[str, Any]:
+async def list_organizations(ctx: Context) -> Dict[str, Any]:
     """
     Liste toutes les organisations Grist accessibles.
     
@@ -78,7 +80,7 @@ async def list_organizations(ctx) -> Dict[str, Any]:
         }
 
 
-async def describe_organization(org_id: Union[int, str], ctx) -> Dict[str, Any]:
+async def describe_organization(org_id: Union[int, str], ctx: Context) -> Dict[str, Any]:
     """
     Obtient des informations détaillées sur une organisation spécifique.
     
@@ -123,7 +125,7 @@ async def describe_organization(org_id: Union[int, str], ctx) -> Dict[str, Any]:
         }
 
 
-async def list_workspaces(org_id: Union[int, str], ctx) -> Dict[str, Any]:
+async def list_workspaces(org_id: Union[int, str], ctx: Context) -> Dict[str, Any]:
     """
     Liste tous les espaces de travail dans une organisation Grist.
     
@@ -176,7 +178,7 @@ async def list_workspaces(org_id: Union[int, str], ctx) -> Dict[str, Any]:
         }
 
 
-async def describe_workspace(workspace_id: int, ctx) -> Dict[str, Any]:
+async def describe_workspace(workspace_id: int, ctx: Context) -> Dict[str, Any]:
     """
     Obtient des informations détaillées sur un espace de travail spécifique.
     
@@ -222,7 +224,7 @@ async def describe_workspace(workspace_id: int, ctx) -> Dict[str, Any]:
         }
 
 
-async def list_documents(workspace_id: int, ctx) -> Dict[str, Any]:
+async def list_documents(workspace_id: int, ctx: Context) -> Dict[str, Any]:
     """
     Liste tous les documents dans un espace de travail Grist.
     
@@ -275,7 +277,7 @@ async def list_documents(workspace_id: int, ctx) -> Dict[str, Any]:
         }
 
 
-async def describe_document(doc_id: str, ctx) -> Dict[str, Any]:
+async def describe_document(doc_id: str, ctx: Context) -> Dict[str, Any]:
     """
     Obtient des informations détaillées sur un document spécifique.
     
@@ -320,7 +322,7 @@ async def describe_document(doc_id: str, ctx) -> Dict[str, Any]:
         }
 
 
-async def list_tables(doc_id: str, ctx) -> Dict[str, Any]:
+async def list_tables(doc_id: str, ctx: Context) -> Dict[str, Any]:
     """
     Liste toutes les tables dans un document Grist.
     
@@ -372,7 +374,7 @@ async def list_tables(doc_id: str, ctx) -> Dict[str, Any]:
         }
 
 
-async def list_columns(doc_id: str, table_id: str, ctx) -> Dict[str, Any]:
+async def list_columns(doc_id: str, table_id: str, ctx: Context) -> Dict[str, Any]:
     """
     Liste toutes les colonnes dans une table Grist.
     
@@ -426,11 +428,11 @@ async def list_columns(doc_id: str, table_id: str, ctx) -> Dict[str, Any]:
 
 
 async def list_records(
-    doc_id: str, 
-    table_id: str, 
+    doc_id: str,
+    table_id: str,
     sort: Optional[str] = None,
     limit: Optional[int] = None,
-    ctx=None
+    ctx: Context = None
 ) -> Dict[str, Any]:
     """
     Liste les enregistrements dans une table Grist avec tri et limitation optionnels.
@@ -493,7 +495,7 @@ async def list_records(
         }
 
 
-async def get_table_schema(doc_id: str, table_id: str, ctx) -> Dict[str, Any]:
+async def get_table_schema(doc_id: str, table_id: str, ctx: Context) -> Dict[str, Any]:
     """
     Obtient le schéma détaillé d'une table Grist.
     

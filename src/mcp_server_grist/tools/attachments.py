@@ -8,6 +8,8 @@ dans les documents Grist: liste, téléchargement, téléversement.
 import logging
 from typing import Any, Dict, List, Optional, Union
 
+from fastmcp import Context
+
 from ..client import get_client
 
 # Configurer le logger
@@ -31,7 +33,7 @@ async def list_attachments(
     doc_id: str,
     sort: Optional[str] = None,
     limit: Optional[int] = None,
-    ctx=None
+    ctx: Context = None
 ) -> Dict[str, Any]:
     """
     Liste les pièces jointes d'un document Grist.
@@ -77,7 +79,7 @@ async def list_attachments(
 async def get_attachment_info(
     doc_id: str,
     attachment_id: int,
-    ctx=None
+    ctx: Context = None
 ) -> Dict[str, Any]:
     """
     Obtient les métadonnées d'une pièce jointe.
@@ -120,7 +122,7 @@ async def get_attachment_info(
 async def download_attachment(
     doc_id: str,
     attachment_id: int,
-    ctx=None
+    ctx: Context = None
 ) -> Dict[str, Any]:
     """
     Télécharge le contenu d'une pièce jointe.
@@ -180,7 +182,7 @@ async def upload_attachment(
     filename: str,
     content_base64: str,
     content_type: str = "application/octet-stream",
-    ctx=None
+    ctx: Context = None
 ) -> Dict[str, Any]:
     """
     Téléverse une pièce jointe dans un document Grist.

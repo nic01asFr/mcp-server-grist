@@ -9,6 +9,8 @@ import logging
 import re
 from typing import Any, Dict, List, Optional, Union
 
+from fastmcp import Context
+
 from ..client import get_client
 
 # Configurer le logger
@@ -34,7 +36,7 @@ async def filter_sql_query(
     where_conditions: Optional[Dict[str, Any]] = None,
     order_by: Optional[str] = None,
     limit: Optional[int] = None,
-    ctx=None
+    ctx: Context = None
 ) -> Dict[str, Any]:
     """
     Exécute une requête SQL de filtrage sur une table Grist.
@@ -130,7 +132,7 @@ async def execute_sql_query(
     sql_query: str,
     parameters: Optional[List[Any]] = None,
     timeout_ms: Optional[int] = 1000,
-    ctx=None
+    ctx: Context = None
 ) -> Dict[str, Any]:
     """
     Exécute une requête SQL personnalisée sur un document Grist.

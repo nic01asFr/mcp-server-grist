@@ -13,6 +13,7 @@ from typing import Any, Dict, List, Optional, Union
 
 import httpx
 from dotenv import load_dotenv
+from fastmcp import Context
 
 from .models import GristColumn, GristDocument, GristOrg, GristRecord, GristTable, GristWorkspace
 from .version import __version__
@@ -712,7 +713,7 @@ class GristClient:
             return {"valid": False, "error": f"Could not validate formula: {str(e)}"}
 
 
-def get_client(ctx=None) -> GristClient:
+def get_client(ctx: Context = None) -> GristClient:
     """
     Obtient un client Grist configuré.
     
