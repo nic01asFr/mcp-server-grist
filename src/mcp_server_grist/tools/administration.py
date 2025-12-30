@@ -3,8 +3,15 @@ Outils d'administration pour l'API Grist.
 
 Ce module contient des outils MCP pour gérer les aspects administratifs
 de Grist: création et modification d'objets, gestion des accès.
+
+Corrections v0.2.0:
+- create_table: format payload corrigé (id au lieu de tableId, columns avec fields)
+- modify_table: format payload corrigé
+- create_column: gestion widgetOptions comme JSON string + nouveaux paramètres
+- modify_column: gestion widgetOptions comme JSON string + nouveaux paramètres
 """
 
+import json
 import logging
 from typing import Any, Dict, List, Optional, Union
 
@@ -570,26 +577,30 @@ async def create_table(
 ) -> Dict[str, Any]:
     """
     Crée une nouvelle table dans un document.
-    
+
     Prérequis:
         - list_documents: Pour obtenir un doc_id valide
-    
+
     Flux de travail typique:
         1. list_documents(workspace_id) → obtenir doc_id
         2. create_table(doc_id, "TableName", columns=[...]) → créer la table
         3. list_tables(doc_id) → vérifier la création
-    
+
     Args:
         doc_id: L'ID du document
         table_id: ID de la nouvelle table (doit être unique dans le document)
         columns: Liste des définitions de colonnes (optionnel)
-                Exemple: [{"id": "name", "type": "Text", "label": "Nom"}]
-        
+                Exemple: [
+                    {"id": "name", "type": "Text", "label": "Nom"},
+                    {"id": "status", "type": "Choice", "widgetOptions": {"choices": ["A", "B", "C"]}},
+                    {"id": "amount", "type": "Numeric"}
+                ]
+
     Returns:
         Dict avec statut, message et détails de la table créée
     """
     logger.info(f"Tool called: create_table with doc_id: {doc_id}, table_id: {table_id}")
-    
+
     try:
         client = get_client(ctx)
         if not client:
@@ -597,23 +608,57 @@ async def create_table(
                 "success": False,
                 "message": "Client Grist non configuré"
             }
-        
+
+        # CORRECTION v0.2.0: Format API Grist corrigé
+        # Structure attendue: {"tables": [{"id": "X", "columns": [{"id": "col", "fields": {...}}]}]}
+        prepared_columns = []
+        for col in (columns or []):
+            col_id = col.get("id")
+            if not col_id:
+                continue
+
+            # Séparer l'ID des fields
+            fields = {}
+            for key, value in col.items():
+                if key == "id":
+                    continue
+                # widgetOptions doit être une string JSON
+                if key == "widgetOptions":
+                    if isinstance(value, dict):
+                        fields[key] = json.dumps(value)
+                    elif isinstance(value, str):
+                        fields[key] = value
+                else:
+                    fields[key] = value
+
+            prepared_columns.append({
+                "id": col_id,
+                "fields": fields
+            })
+
         table_data = {
             "tables": [
                 {
-                    "tableId": table_id,
-                    "columns": columns or []
+                    "id": table_id,  # CORRECTION: "id" au lieu de "tableId"
+                    "columns": prepared_columns
                 }
             ]
         }
-        
+
         result = await client.create_tables(doc_id, table_data)
-        
-        return {
+
+        # Vérifier si l'ID réel correspond à celui demandé
+        response = {
             "success": True,
             "message": f"Table '{table_id}' créée avec succès",
-            "table": result[0] if result else None
+            "table": result[0] if result else {"id": table_id}
         }
+
+        if result and result[0].get("id") != table_id:
+            actual_id = result[0].get("id")
+            response["warning"] = f"L'ID demandé '{table_id}' a été modifié en '{actual_id}' par Grist"
+
+        return response
     except Exception as e:
         logger.error(f"Error creating table: {e}")
         return {
@@ -630,20 +675,20 @@ async def modify_table(
 ) -> Dict[str, Any]:
     """
     Modifie les propriétés d'une table.
-    
+
     Prérequis:
         - list_tables: Pour obtenir un table_id valide
-    
+
     Args:
         doc_id: L'ID du document
         table_id: L'ID actuel de la table
         new_table_id: Nouvel ID pour la table (optionnel)
-        
+
     Returns:
         Dict avec statut et message de l'opération
     """
     logger.info(f"Tool called: modify_table with doc_id: {doc_id}, table_id: {table_id}")
-    
+
     try:
         client = get_client(ctx)
         if not client:
@@ -651,27 +696,31 @@ async def modify_table(
                 "success": False,
                 "message": "Client Grist non configuré"
             }
-        
+
+        if not new_table_id:
+            return {
+                "success": False,
+                "message": "Aucune modification demandée (new_table_id requis)"
+            }
+
+        # CORRECTION v0.2.0: Format API Grist corrigé
+        # Structure attendue: {"tables": [{"id": "currentId", "fields": {"tableId": "newId"}}]}
         table_data = {
             "tables": [
                 {
-                    "tableId": table_id
+                    "id": table_id,  # CORRECTION: "id" au lieu de "tableId"
+                    "fields": {
+                        "tableId": new_table_id  # Le nouveau nom va dans fields.tableId
+                    }
                 }
             ]
         }
-        
-        if new_table_id:
-            table_data["tables"][0]["newTableId"] = new_table_id
-        
+
         await client.modify_tables(doc_id, table_data)
-        
-        message = f"Table {table_id} modifiée avec succès"
-        if new_table_id:
-            message += f" (renommée en '{new_table_id}')"
-        
+
         return {
             "success": True,
-            "message": message
+            "message": f"Table '{table_id}' renommée en '{new_table_id}' avec succès"
         }
     except Exception as e:
         logger.error(f"Error modifying table: {e}")
@@ -691,33 +740,61 @@ async def create_column(
     label: Optional[str] = None,
     formula: Optional[str] = None,
     widget_options: Optional[Dict[str, Any]] = None,
+    visible_col: Optional[int] = None,
+    untie_col_id_from_label: bool = True,
+    description: Optional[str] = None,
+    choices: Optional[List[str]] = None,
     ctx: Context = None
 ) -> Dict[str, Any]:
     """
     Crée une nouvelle colonne dans une table.
-    
+
     Prérequis:
         - list_tables: Pour obtenir un table_id valide
-    
+
     Flux de travail typique:
         1. list_tables(doc_id) → obtenir table_id
         2. create_column(doc_id, table_id, "col_name", "Text", "Nom") → créer la colonne
         3. list_columns(doc_id, table_id) → vérifier la création
-    
+
     Args:
         doc_id: L'ID du document
         table_id: L'ID de la table
         column_id: ID de la nouvelle colonne (doit être unique dans la table)
-        column_type: Type de données (Text, Numeric, Bool, Date, etc.)
+        column_type: Type de données. Types supportés:
+            - Text, Numeric, Int, Bool, Date, DateTime
+            - Choice, ChoiceList (avec paramètre choices)
+            - Ref:TableId, RefList:TableId (références)
+            - Attachments
         label: Libellé d'affichage de la colonne (optionnel)
-        formula: Formule pour les colonnes calculées (optionnel)
-        widget_options: Options d'affichage (optionnel)
-        
+        formula: Formule Python pour colonnes calculées (optionnel)
+        widget_options: Options d'affichage comme dict (optionnel)
+        visible_col: colRef de la colonne à afficher pour les Ref (optionnel)
+        untie_col_id_from_label: Dissocier l'ID du label (défaut: True)
+        description: Description de la colonne (optionnel)
+        choices: Liste de choix pour Choice/ChoiceList (optionnel)
+
     Returns:
         Dict avec statut, message et détails de la colonne créée
+
+    Examples:
+        # Colonne texte simple
+        create_column(doc_id, "Table1", "name", "Text", label="Nom")
+
+        # Colonne choix
+        create_column(doc_id, "Table1", "status", "Choice",
+                      choices=["Actif", "Inactif", "En attente"])
+
+        # Colonne référence
+        create_column(doc_id, "Table1", "owner", "Ref:Users",
+                      label="Propriétaire", visible_col=5)
+
+        # Colonne calculée
+        create_column(doc_id, "Table1", "full_name", "Text",
+                      formula="$first_name + ' ' + $last_name")
     """
     logger.info(f"Tool called: create_column with doc_id: {doc_id}, table_id: {table_id}, column_id: {column_id}")
-    
+
     try:
         client = get_client(ctx)
         if not client:
@@ -725,33 +802,45 @@ async def create_column(
                 "success": False,
                 "message": "Client Grist non configuré"
             }
-        
+
+        # CORRECTION v0.2.0: Format amélioré avec nouveaux paramètres
+        fields = {
+            "type": column_type,
+            "untieColIdFromLabel": untie_col_id_from_label
+        }
+
+        if label:
+            fields["label"] = label
+        if formula:
+            fields["formula"] = formula
+            fields["isFormula"] = True
+        if description:
+            fields["description"] = description
+        if visible_col is not None:
+            fields["visibleCol"] = visible_col
+
+        # CORRECTION v0.2.0: widgetOptions doit être une string JSON
+        opts = widget_options.copy() if widget_options else {}
+        if choices and column_type in ("Choice", "ChoiceList"):
+            opts["choices"] = choices
+        if opts:
+            fields["widgetOptions"] = json.dumps(opts)
+
         column_data = {
             "columns": [
                 {
                     "id": column_id,
-                    "fields":{
-                        "type": column_type
-                    }
+                    "fields": fields
                 }
             ]
         }
-        
-        # Ajouter les champs optionnels s'ils sont fournis
-        if label:
-            column_data["columns"][0]["fields"]["label"] = label
-        if formula:
-            column_data["columns"][0]["fields"]["formula"] = formula
-            column_data["columns"][0]["fields"]["isFormula"] = True
-        if widget_options:
-            column_data["columns"][0]["fields"]["widgetOptions"] = widget_options
-        
+
         result = await client.create_columns(doc_id, table_id, column_data)
-        
+
         return {
             "success": True,
             "message": f"Colonne '{column_id}' créée avec succès",
-            "column": result[0] if result else None
+            "column": result[0] if result else {"id": column_id}
         }
     except Exception as e:
         logger.error(f"Error creating column: {e}")
@@ -770,14 +859,17 @@ async def modify_column(
     label: Optional[str] = None,
     formula: Optional[str] = None,
     widget_options: Optional[Dict[str, Any]] = None,
+    visible_col: Optional[int] = None,
+    untie_col_id_from_label: Optional[bool] = None,
+    description: Optional[str] = None,
     ctx: Context = None
 ) -> Dict[str, Any]:
     """
     Modifie les propriétés d'une colonne.
-    
+
     Prérequis:
         - list_columns: Pour obtenir un column_id valide
-    
+
     Args:
         doc_id: L'ID du document
         table_id: L'ID de la table
@@ -785,14 +877,17 @@ async def modify_column(
         new_column_id: Nouvel ID pour la colonne (optionnel)
         column_type: Nouveau type de données (optionnel)
         label: Nouveau libellé d'affichage (optionnel)
-        formula: Nouvelle formule (optionnel)
+        formula: Nouvelle formule (optionnel, "" pour supprimer)
         widget_options: Nouvelles options d'affichage (optionnel)
-        
+        visible_col: Nouveau colRef pour les Ref (optionnel)
+        untie_col_id_from_label: Dissocier l'ID du label (optionnel)
+        description: Nouvelle description (optionnel)
+
     Returns:
         Dict avec statut et message de l'opération
     """
     logger.info(f"Tool called: modify_column with doc_id: {doc_id}, table_id: {table_id}, column_id: {column_id}")
-    
+
     try:
         client = get_client(ctx)
         if not client:
@@ -800,35 +895,51 @@ async def modify_column(
                 "success": False,
                 "message": "Client Grist non configuré"
             }
-        
+
+        fields = {}
+
+        # Ajouter les champs à modifier s'ils sont fournis
+        if new_column_id:
+            fields["colId"] = new_column_id
+        if column_type:
+            fields["type"] = column_type
+        if label is not None:
+            fields["label"] = label
+        if formula is not None:  # Permettre de vider la formule avec une chaîne vide
+            fields["formula"] = formula
+            fields["isFormula"] = bool(formula)
+        if description is not None:
+            fields["description"] = description
+        if visible_col is not None:
+            fields["visibleCol"] = visible_col
+        if untie_col_id_from_label is not None:
+            fields["untieColIdFromLabel"] = untie_col_id_from_label
+
+        # CORRECTION v0.2.0: widgetOptions doit être une string JSON
+        if widget_options is not None:
+            fields["widgetOptions"] = json.dumps(widget_options)
+
+        if not fields:
+            return {
+                "success": False,
+                "message": "Aucune modification demandée"
+            }
+
         column_data = {
             "columns": [
                 {
                     "id": column_id,
-                    "fields": {} 
+                    "fields": fields
                 }
             ]
         }
-        
-        # Ajouter les champs à modifier s'ils sont fournis
-        if new_column_id:
-            column_data["columns"][0]["newId"] = new_column_id
-        if column_type:
-            column_data["columns"][0]["fields"]["type"] = column_type
-        if label:
-            column_data["columns"][0]["fields"]["label"] = label
-        if formula is not None:  # Permettre de vider la formule avec une chaîne vide
-            column_data["columns"][0]["fields"]["formula"] = formula
-            column_data["columns"][0]["fields"]["isFormula"] = bool(formula)
-        if widget_options:
-            column_data["columns"][0]["fields"]["widgetOptions"] = widget_options
-        
+
         await client.modify_columns(doc_id, table_id, column_data)
-        
+
         message = f"Colonne '{column_id}' modifiée avec succès"
         if new_column_id:
             message += f" (renommée en '{new_column_id}')"
-        
+
         return {
             "success": True,
             "message": message

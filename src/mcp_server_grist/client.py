@@ -408,13 +408,15 @@ class GristClient:
             response.raise_for_status()
             return response.content
     
-    async def download_doc_xlsx(self, doc_id: str, header: str = "label") -> bytes:
+    async def download_doc_xlsx(self, doc_id: str, table_id: Optional[str] = None, header: str = "label") -> bytes:
         """Télécharge un document au format Excel."""
         params = {"header": header}
+        if table_id:
+            params["tableId"] = table_id
         
-        logger.debug(f"Downloading document {doc_id} as Excel")
+        logger.debug(f"Downloading document {doc_id} as Excel with params: {params}")
         try:
-            async with httpx.AsyncClient(timeout=120.0) as client:  # Augmenter timeout
+            async with httpx.AsyncClient(timeout=120.0) as client:
                 response = await client.request(
                     method="GET",
                     url=f"{self.api_url.rstrip('/')}/docs/{doc_id}/download/xlsx",
@@ -423,17 +425,15 @@ class GristClient:
                 )
                 
                 logger.debug(f"Excel download response status: {response.status_code}")
-                logger.debug(f"Excel download response headers: {dict(response.headers)}")
                 
                 response.raise_for_status()
                 return response.content
                 
         except httpx.TimeoutException as e:
             logger.error(f"Excel download timeout for doc {doc_id}: {e}")
-            raise ValueError(f"Excel download timeout - document may be too large. Try download_document_sqlite as alternative.")
+            raise ValueError(f"Excel download timeout - document may be too large.")
         except httpx.HTTPStatusError as e:
             logger.error(f"Excel download HTTP error for doc {doc_id}: {e}")
-            logger.error(f"Response text: {e.response.text}")
             raise ValueError(f"Excel download failed: {e.response.status_code} - {e.response.text}")
         except Exception as e:
             logger.error(f"Excel download unexpected error for doc {doc_id}: {e}")
