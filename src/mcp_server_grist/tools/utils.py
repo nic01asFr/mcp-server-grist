@@ -209,8 +209,9 @@ async def resolve_visible_col(
         Tuple (colRef, error_message)
     """
     try:
-        response = await client.get(f"/docs/{doc_id}/tables/{table_id}/columns")
-        columns = response.get("columns", [])
+        # Utiliser la méthode list_columns du client
+        columns_list = await client.list_columns(doc_id, table_id)
+        columns = [{"id": c.id, "fields": c.fields} for c in columns_list]
         
         for col in columns:
             col_id = col.get("id")
@@ -242,9 +243,9 @@ async def check_table_exists(
         Tuple (exists, list_of_tables)
     """
     try:
-        response = await client.get(f"/docs/{doc_id}/tables")
-        tables = response.get("tables", [])
-        table_ids = [t.get("id") for t in tables]
+        # Utiliser la méthode list_tables du client
+        tables_list = await client.list_tables(doc_id)
+        table_ids = [t.id for t in tables_list]
         return table_id in table_ids, table_ids
     except Exception:
         return False, []

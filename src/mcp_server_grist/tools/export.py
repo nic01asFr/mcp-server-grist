@@ -86,6 +86,7 @@ async def download_document_sqlite(
 
 async def download_document_excel(
     doc_id: str,
+    table_id: Optional[str] = None,
     header: str = "label",
     ctx: Context = None
 ) -> Dict[str, Any]:
@@ -97,12 +98,13 @@ async def download_document_excel(
     
     Args:
         doc_id: L'ID du document
+        table_id: L'ID de la table à exporter (optionnel, première table par défaut)
         header: Format des en-têtes (label, id, ou none)
         
     Returns:
         Dict avec statut, message et contenu encodé en base64
     """
-    logger.info(f"Tool called: download_document_excel with doc_id: {doc_id}")
+    logger.info(f"Tool called: download_document_excel with doc_id: {doc_id}, table_id: {table_id}")
     
     try:
         client = get_client(ctx)
@@ -118,16 +120,27 @@ async def download_document_excel(
                 "message": "Format d'en-tête invalide. Doit être: label, id, ou none"
             }
         
-        content = await client.download_doc_xlsx(doc_id, header=header)
+        # Si pas de table_id, récupérer la première table du document
+        if not table_id:
+            tables = await client.list_tables(doc_id)
+            if not tables:
+                return {
+                    "success": False,
+                    "message": "Aucune table trouvée dans le document"
+                }
+            table_id = tables[0].id
+            logger.info(f"Auto-selected table: {table_id}")
+        
+        content = await client.download_doc_xlsx(doc_id, table_id=table_id, header=header)
         
         # Encoder le contenu binaire en base64
         encoded_content = base64.b64encode(content).decode('utf-8')
         
         return {
             "success": True,
-            "message": f"Document {doc_id} téléchargé avec succès au format Excel",
+            "message": f"Table {table_id} du document {doc_id} téléchargée avec succès au format Excel",
             "content_type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            "filename": f"{doc_id}.xlsx",
+            "filename": f"{table_id}.xlsx",
             "content_base64": encoded_content,
             "size_bytes": len(content)
         }

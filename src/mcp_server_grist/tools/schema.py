@@ -75,10 +75,6 @@ async def create_reference_column(
     3. Crée la colonne de référence
     4. Optionnellement crée la relation inverse
     
-    Prérequis:
-        - list_tables: Pour connaître les tables disponibles
-        - La table cible doit exister
-    
     Args:
         doc_id: L'ID du document
         table_id: L'ID de la table source
@@ -91,22 +87,6 @@ async def create_reference_column(
     
     Returns:
         Dict avec statut, détails et éventuels warnings
-    
-    Examples:
-        # Référence simple
-        create_reference_column(
-            doc_id, "Taches", "responsable",
-            target_table="Agents",
-            visible_column="nom_complet"
-        )
-        
-        # Référence avec relation inverse
-        create_reference_column(
-            doc_id, "Taches", "projet",
-            target_table="Projets",
-            visible_column="nom",
-            reverse_column="taches"  # Crée Projets.taches
-        )
     """
     try:
         client = get_client(ctx)
@@ -139,12 +119,8 @@ async def create_reference_column(
             visible_col=col_ref
         )
         
-        response = await client.post(
-            f"/docs/{doc_id}/tables/{table_id}/columns",
-            json=payload
-        )
-        
-        columns_created = response.get("columns", [])
+        # Utiliser la méthode create_columns du client
+        columns_created = await client.create_columns(doc_id, table_id, payload)
         
         # PHASE 4: Création de la relation inverse (optionnel)
         reverse_result = None
@@ -167,12 +143,8 @@ async def create_reference_column(
                     visible_col=source_col_ref
                 )
                 
-                reverse_response = await client.post(
-                    f"/docs/{doc_id}/tables/{target_table}/columns",
-                    json=reverse_payload
-                )
-                
-                reverse_result = reverse_response.get("columns", [{}])[0]
+                reverse_columns = await client.create_columns(doc_id, target_table, reverse_payload)
+                reverse_result = reverse_columns[0] if reverse_columns else {"id": reverse_column}
                 
             except Exception as e:
                 warnings.append(
@@ -226,23 +198,6 @@ async def validate_schema(
     
     Returns:
         Dict avec statut de validation, erreurs et warnings
-    
-    Example schema:
-        {
-            "tables": {
-                "Agents": {
-                    "columns": {
-                        "nom": {"type": "Text"},
-                        "service": {"type": "Choice", "choices": ["A", "B"]}
-                    }
-                },
-                "Projets": {
-                    "columns": {
-                        "chef": {"type": "Ref", "target": "Agents", "visible": "nom"}
-                    }
-                }
-            }
-        }
     """
     try:
         errors = []
@@ -260,8 +215,10 @@ async def validate_schema(
         client = get_client(ctx)
         if not client:
             return build_error_response("Client Grist non configuré")
-        response = await client.get(f"/docs/{doc_id}/tables")
-        existing_tables = {t.get("id") for t in response.get("tables", [])}
+        
+        # Utiliser list_tables du client
+        tables_list = await client.list_tables(doc_id)
+        existing_tables = {t.id for t in tables_list}
         
         # Tables définies dans le schéma
         schema_tables = {t.id for t in schema_def.tables}
@@ -348,38 +305,6 @@ async def create_schema(
     
     Returns:
         Dict avec rapport détaillé de création
-    
-    Example schema:
-        {
-            "tables": {
-                "Agents": {
-                    "columns": {
-                        "nom": {"type": "Text", "label": "Nom"},
-                        "email": {"type": "Text", "label": "Email"},
-                        "nom_complet": {
-                            "type": "Text",
-                            "formula": "$prenom + ' ' + $nom"
-                        }
-                    }
-                },
-                "Projets": {
-                    "columns": {
-                        "nom": {"type": "Text"},
-                        "chef": {
-                            "type": "Ref",
-                            "target": "Agents",
-                            "visible": "nom_complet",
-                            "label": "Chef de projet"
-                        }
-                    }
-                }
-            },
-            "data": {
-                "Agents": [
-                    {"nom": "Dupont", "prenom": "Jean"}
-                ]
-            }
-        }
     """
     report = SchemaCreationReport()
     
@@ -405,8 +330,8 @@ async def create_schema(
         schema_def = parse_schema_dict(schema)
         
         # Récupérer les tables existantes
-        response = await client.get(f"/docs/{doc_id}/tables")
-        existing_tables = {t.get("id") for t in response.get("tables", [])}
+        tables_list = await client.list_tables(doc_id)
+        existing_tables = {t.id for t in tables_list}
         
         # Mapping table_id schéma → table_id réel (au cas où Grist renomme)
         table_mapping = {}
@@ -444,9 +369,8 @@ async def create_schema(
             # Créer la table
             try:
                 payload = prepare_table_payload(table.id, simple_columns)
-                response = await client.post(f"/docs/{doc_id}/tables", json=payload)
+                tables_created = await client.create_tables(doc_id, payload)
                 
-                tables_created = response.get("tables", [])
                 if tables_created:
                     actual_id = tables_created[0].get("id", table.id)
                     table_mapping[table.id] = actual_id
@@ -475,13 +399,11 @@ async def create_schema(
             
             if actual_table not in col_ref_cache:
                 try:
-                    response = await client.get(
-                        f"/docs/{doc_id}/tables/{actual_table}/columns"
-                    )
+                    columns_list = await client.list_columns(doc_id, actual_table)
                     col_ref_cache[actual_table] = {}
-                    for col in response.get("columns", []):
-                        col_id = col.get("id")
-                        col_fields = col.get("fields", {})
+                    for col in columns_list:
+                        col_id = col.id
+                        col_fields = col.fields if hasattr(col, 'fields') else {}
                         col_label = col_fields.get("label", col_id)
                         col_ref = col_fields.get("colRef")
                         col_ref_cache[actual_table][col_id] = col_ref
@@ -518,10 +440,7 @@ async def create_schema(
                         visible_col=visible_col_ref
                     )
                     
-                    response = await client.post(
-                        f"/docs/{doc_id}/tables/{actual_table_id}/columns",
-                        json=payload
-                    )
+                    await client.create_columns(doc_id, actual_table_id, payload)
                     
                     report.references_created.append({
                         "table": actual_table_id,
@@ -539,10 +458,7 @@ async def create_schema(
                                 label=f"{table.id}s"
                             )
                             
-                            await client.post(
-                                f"/docs/{doc_id}/tables/{target_table}/columns",
-                                json=reverse_payload
-                            )
+                            await client.create_columns(doc_id, target_table, reverse_payload)
                             
                             report.references_created.append({
                                 "table": target_table,
@@ -568,13 +484,7 @@ async def create_schema(
                 
                 try:
                     if records:
-                        payload = {"records": [{"fields": r} for r in records]}
-                        response = await client.post(
-                            f"/docs/{doc_id}/tables/{actual_table_id}/records",
-                            json=payload
-                        )
-                        
-                        record_ids = response.get("records", [])
+                        record_ids = await client.add_records(doc_id, actual_table_id, records)
                         report.records_inserted.append({
                             "table": actual_table_id,
                             "count": len(record_ids)
@@ -629,32 +539,28 @@ async def export_schema(
         if not client:
             return build_error_response("Client Grist non configuré")
         
-        # Récupérer les tables
-        response = await client.get(f"/docs/{doc_id}/tables")
-        tables = response.get("tables", [])
+        # Récupérer les tables avec list_tables
+        tables_list = await client.list_tables(doc_id)
         
         schema = {"tables": {}}
         data = {} if include_data else None
         
-        for table in tables:
-            table_id = table.get("id")
+        for table in tables_list:
+            table_id = table.id
             if not table_id or table_id.startswith("_"):
                 continue  # Ignorer les tables système
             
-            # Récupérer les colonnes
-            col_response = await client.get(
-                f"/docs/{doc_id}/tables/{table_id}/columns"
-            )
-            columns = col_response.get("columns", [])
+            # Récupérer les colonnes avec list_columns
+            columns_list = await client.list_columns(doc_id, table_id)
             
             table_def = {"columns": {}}
             
-            for col in columns:
-                col_id = col.get("id")
+            for col in columns_list:
+                col_id = col.id
                 if not col_id or col_id == "id":
                     continue
                 
-                fields = col.get("fields", {})
+                fields = col.fields if hasattr(col, 'fields') else {}
                 col_type = fields.get("type", "Text")
                 
                 col_def = {"type": col_type}
@@ -699,12 +605,8 @@ async def export_schema(
             # Récupérer les données si demandé
             if include_data:
                 try:
-                    data_response = await client.get(
-                        f"/docs/{doc_id}/tables/{table_id}/records",
-                        params={"limit": 100}
-                    )
-                    records = data_response.get("records", [])
-                    data[table_id] = [r.get("fields", {}) for r in records]
+                    records_list = await client.list_records(doc_id, table_id, limit=100)
+                    data[table_id] = [r.fields if hasattr(r, 'fields') else {} for r in records_list]
                 except Exception:
                     pass
         
