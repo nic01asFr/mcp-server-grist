@@ -1,3 +1,5 @@
+![Grist-Logo.png](https://www.getgrist.com/wp-content/uploads/2023/03/Grist-Logo.png)
+
 # Grist MCP Server
 
 [![PyPI version](https://img.shields.io/pypi/v/mcp-server-grist.svg)](https://pypi.org/project/mcp-server-grist/)
