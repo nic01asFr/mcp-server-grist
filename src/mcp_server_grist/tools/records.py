@@ -8,6 +8,8 @@ dans les tables Grist: ajout, mise à jour et suppression.
 import logging
 from typing import Any, Dict, List, Optional, Union
 
+from fastmcp import Context
+
 from ..client import get_client
 
 # Configurer le logger
@@ -29,10 +31,10 @@ def register_record_tools(mcp_server):
 
 
 async def add_grist_records(
-    doc_id: str, 
-    table_id: str, 
-    records: List[Dict[str, Any]], 
-    ctx=None
+    doc_id: str,
+    table_id: str,
+    records: List[Dict[str, Any]],
+    ctx: Context = None
 ) -> Dict[str, Any]:
     """
     Ajoute des enregistrements à une table Grist.
@@ -80,10 +82,10 @@ async def add_grist_records(
 
 
 async def add_grist_records_safe(
-    doc_id: str, 
-    table_id: str, 
-    records: List[Dict[str, Any]], 
-    ctx=None
+    doc_id: str,
+    table_id: str,
+    records: List[Dict[str, Any]],
+    ctx: Context = None
 ) -> Dict[str, Any]:
     """
     Ajoute des enregistrements avec validation préalable de la structure.
@@ -167,10 +169,10 @@ async def add_grist_records_safe(
 
 
 async def update_grist_records(
-    doc_id: str, 
-    table_id: str, 
-    records: List[Dict[str, Any]], 
-    ctx=None
+    doc_id: str,
+    table_id: str,
+    records: List[Dict[str, Any]],
+    ctx: Context = None
 ) -> Dict[str, Any]:
     """
     Met à jour des enregistrements existants dans une table Grist.
@@ -229,10 +231,10 @@ async def update_grist_records(
 
 
 async def delete_grist_records(
-    doc_id: str, 
-    table_id: str, 
-    record_ids: List[int], 
-    ctx=None
+    doc_id: str,
+    table_id: str,
+    record_ids: List[int],
+    ctx: Context = None
 ) -> Dict[str, Any]:
     """
     Supprime des enregistrements d'une table Grist.

@@ -8,6 +8,8 @@ aux organisations, espaces de travail et documents Grist.
 import logging
 from typing import Any, Dict, List, Optional, Union
 
+from fastmcp import Context
+
 from ..client import get_client
 
 # Configurer le logger
@@ -37,8 +39,8 @@ def register_access_tools(mcp_server):
 # --- Organisation Access ---
 
 async def list_organization_access(
-    org_id: Union[int, str], 
-    ctx=None
+    org_id: Union[int, str],
+    ctx: Context = None
 ) -> Dict[str, Any]:
     """
     Liste les utilisateurs ayant accès à une organisation.
@@ -78,10 +80,10 @@ async def list_organization_access(
 
 
 async def modify_organization_access(
-    org_id: Union[int, str], 
+    org_id: Union[int, str],
     user_email: str,
     access_level: str,
-    ctx=None
+    ctx: Context = None
 ) -> Dict[str, Any]:
     """
     Modifie l'accès d'un utilisateur à une organisation.
@@ -138,8 +140,8 @@ async def modify_organization_access(
 # --- Workspace Access ---
 
 async def list_workspace_access(
-    workspace_id: int, 
-    ctx=None
+    workspace_id: int,
+    ctx: Context = None
 ) -> Dict[str, Any]:
     """
     Liste les utilisateurs ayant accès à un espace de travail.
@@ -179,10 +181,10 @@ async def list_workspace_access(
 
 
 async def modify_workspace_access(
-    workspace_id: int, 
+    workspace_id: int,
     user_email: str,
     access_level: str,
-    ctx=None
+    ctx: Context = None
 ) -> Dict[str, Any]:
     """
     Modifie l'accès d'un utilisateur à un espace de travail.
@@ -239,8 +241,8 @@ async def modify_workspace_access(
 # --- Document Access ---
 
 async def list_document_access(
-    doc_id: str, 
-    ctx=None
+    doc_id: str,
+    ctx: Context = None
 ) -> Dict[str, Any]:
     """
     Liste les utilisateurs ayant accès à un document.
@@ -280,10 +282,10 @@ async def list_document_access(
 
 
 async def modify_document_access(
-    doc_id: str, 
+    doc_id: str,
     user_email: str,
     access_level: str,
-    ctx=None
+    ctx: Context = None
 ) -> Dict[str, Any]:
     """
     Modifie l'accès d'un utilisateur à un document.

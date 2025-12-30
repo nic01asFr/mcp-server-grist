@@ -8,6 +8,8 @@ dans les documents Grist: liste, création, modification, suppression.
 import logging
 from typing import Any, Dict, List, Optional, Union
 
+from fastmcp import Context
+
 from ..client import get_client
 
 # Configurer le logger
@@ -28,7 +30,7 @@ def register_webhook_tools(mcp_server):
     mcp_server.tool()(clear_webhook_queue)
 
 
-async def list_webhooks(doc_id: str, ctx=None) -> Dict[str, Any]:
+async def list_webhooks(doc_id: str, ctx: Context = None) -> Dict[str, Any]:
     """
     Liste les webhooks d'un document Grist.
     
@@ -74,7 +76,7 @@ async def create_webhook(
     table_id: Optional[str] = None,
     event_types: Optional[List[str]] = None,
     memo: Optional[str] = None,
-    ctx=None
+    ctx: Context = None
 ) -> Dict[str, Any]:
     """
     Crée un webhook pour un document Grist.
@@ -160,7 +162,7 @@ async def modify_webhook(
     event_types: Optional[List[str]] = None,
     memo: Optional[str] = None,
     active: Optional[bool] = None,
-    ctx=None
+    ctx: Context = None
 ) -> Dict[str, Any]:
     """
     Modifie un webhook existant.
@@ -242,7 +244,7 @@ async def modify_webhook(
 async def delete_webhook(
     doc_id: str,
     webhook_id: str,
-    ctx=None
+    ctx: Context = None
 ) -> Dict[str, Any]:
     """
     Supprime un webhook.
@@ -283,7 +285,7 @@ async def delete_webhook(
 
 async def clear_webhook_queue(
     doc_id: str,
-    ctx=None
+    ctx: Context = None
 ) -> Dict[str, Any]:
     """
     Vide la file d'attente des webhooks pour un document.

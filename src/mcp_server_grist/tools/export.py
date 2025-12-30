@@ -9,6 +9,8 @@ import base64
 import logging
 from typing import Any, Dict, List, Optional, Union
 
+from fastmcp import Context
+
 from ..client import get_client
 
 # Configurer le logger
@@ -31,7 +33,7 @@ async def download_document_sqlite(
     doc_id: str,
     nohistory: bool = False,
     template: bool = False,
-    ctx=None
+    ctx: Context = None
 ) -> Dict[str, Any]:
     """
     Télécharge un document Grist au format SQLite.
@@ -81,7 +83,7 @@ async def download_document_sqlite(
 async def download_document_excel(
     doc_id: str,
     header: str = "label",
-    ctx=None
+    ctx: Context = None
 ) -> Dict[str, Any]:
     """
     Télécharge un document Grist au format Excel.
@@ -137,7 +139,7 @@ async def download_table_csv(
     doc_id: str,
     table_id: str,
     header: str = "label",
-    ctx=None
+    ctx: Context = None
 ) -> Dict[str, Any]:
     """
     Télécharge une table Grist au format CSV.

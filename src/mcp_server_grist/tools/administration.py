@@ -8,6 +8,8 @@ de Grist: création et modification d'objets, gestion des accès.
 import logging
 from typing import Any, Dict, List, Optional, Union
 
+from fastmcp import Context
+
 from ..client import get_client
 
 # Configurer le logger
@@ -51,9 +53,9 @@ def register_admin_tools(mcp_server):
 # --- Organisation Management ---
 
 async def modify_organization(
-    org_id: Union[int, str], 
+    org_id: Union[int, str],
     name: Optional[str] = None,
-    ctx=None
+    ctx: Context = None
 ) -> Dict[str, Any]:
     """
     Modifie les propriétés d'une organisation.
@@ -103,8 +105,8 @@ async def modify_organization(
 
 
 async def delete_organization(
-    org_id: Union[int, str], 
-    ctx=None
+    org_id: Union[int, str],
+    ctx: Context = None
 ) -> Dict[str, Any]:
     """
     Supprime une organisation.
@@ -146,9 +148,9 @@ async def delete_organization(
 # --- Workspace Management ---
 
 async def create_workspace(
-    org_id: Union[int, str], 
+    org_id: Union[int, str],
     name: str,
-    ctx=None
+    ctx: Context = None
 ) -> Dict[str, Any]:
     """
     Crée un nouvel espace de travail dans une organisation.
@@ -195,9 +197,9 @@ async def create_workspace(
 
 
 async def modify_workspace(
-    workspace_id: int, 
+    workspace_id: int,
     name: Optional[str] = None,
-    ctx=None
+    ctx: Context = None
 ) -> Dict[str, Any]:
     """
     Modifie les propriétés d'un espace de travail.
@@ -247,8 +249,8 @@ async def modify_workspace(
 
 
 async def delete_workspace(
-    workspace_id: int, 
-    ctx=None
+    workspace_id: int,
+    ctx: Context = None
 ) -> Dict[str, Any]:
     """
     Supprime un espace de travail.
@@ -290,9 +292,9 @@ async def delete_workspace(
 # --- Document Management ---
 
 async def create_document(
-    workspace_id: int, 
+    workspace_id: int,
     name: str,
-    ctx=None
+    ctx: Context = None
 ) -> Dict[str, Any]:
     """
     Crée un nouveau document dans un espace de travail.
@@ -339,10 +341,10 @@ async def create_document(
 
 
 async def modify_document(
-    doc_id: str, 
+    doc_id: str,
     name: Optional[str] = None,
     is_pinned: Optional[bool] = None,
-    ctx=None
+    ctx: Context = None
 ) -> Dict[str, Any]:
     """
     Modifie les propriétés d'un document.
@@ -395,8 +397,8 @@ async def modify_document(
 
 
 async def delete_document(
-    doc_id: str, 
-    ctx=None
+    doc_id: str,
+    ctx: Context = None
 ) -> Dict[str, Any]:
     """
     Supprime un document.
@@ -436,9 +438,9 @@ async def delete_document(
 
 
 async def move_document(
-    doc_id: str, 
+    doc_id: str,
     target_workspace_id: int,
-    ctx=None
+    ctx: Context = None
 ) -> Dict[str, Any]:
     """
     Déplace un document vers un autre espace de travail.
@@ -479,8 +481,8 @@ async def move_document(
 
 
 async def force_reload_document(
-    doc_id: str, 
-    ctx=None
+    doc_id: str,
+    ctx: Context = None
 ) -> Dict[str, Any]:
     """
     Force le rechargement d'un document.
@@ -518,9 +520,9 @@ async def force_reload_document(
 
 
 async def delete_document_history(
-    doc_id: str, 
+    doc_id: str,
     keep: int = 1000,
-    ctx=None
+    ctx: Context = None
 ) -> Dict[str, Any]:
     """
     Supprime l'historique d'un document, ne conservant que les dernières actions.
@@ -561,10 +563,10 @@ async def delete_document_history(
 # --- Table Management ---
 
 async def create_table(
-    doc_id: str, 
+    doc_id: str,
     table_id: str,
     columns: Optional[List[Dict[str, Any]]] = None,
-    ctx=None
+    ctx: Context = None
 ) -> Dict[str, Any]:
     """
     Crée une nouvelle table dans un document.
@@ -621,10 +623,10 @@ async def create_table(
 
 
 async def modify_table(
-    doc_id: str, 
+    doc_id: str,
     table_id: str,
     new_table_id: Optional[str] = None,
-    ctx=None
+    ctx: Context = None
 ) -> Dict[str, Any]:
     """
     Modifie les propriétés d'une table.
@@ -682,14 +684,14 @@ async def modify_table(
 # --- Column Management ---
 
 async def create_column(
-    doc_id: str, 
+    doc_id: str,
     table_id: str,
     column_id: str,
     column_type: str = "Text",
     label: Optional[str] = None,
     formula: Optional[str] = None,
     widget_options: Optional[Dict[str, Any]] = None,
-    ctx=None
+    ctx: Context = None
 ) -> Dict[str, Any]:
     """
     Crée une nouvelle colonne dans une table.
@@ -760,7 +762,7 @@ async def create_column(
 
 
 async def modify_column(
-    doc_id: str, 
+    doc_id: str,
     table_id: str,
     column_id: str,
     new_column_id: Optional[str] = None,
@@ -768,7 +770,7 @@ async def modify_column(
     label: Optional[str] = None,
     formula: Optional[str] = None,
     widget_options: Optional[Dict[str, Any]] = None,
-    ctx=None
+    ctx: Context = None
 ) -> Dict[str, Any]:
     """
     Modifie les propriétés d'une colonne.
@@ -840,10 +842,10 @@ async def modify_column(
 
 
 async def delete_column(
-    doc_id: str, 
+    doc_id: str,
     table_id: str,
     column_id: str,
-    ctx=None
+    ctx: Context = None
 ) -> Dict[str, Any]:
     """
     Supprime une colonne d'une table.
