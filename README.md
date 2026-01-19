@@ -113,7 +113,7 @@ Pour contribuer ou personnaliser le serveur :
 
 ```bash
 # Cloner le repository
-git clone https://github.com/modelcontextprotocol/mcp-server-grist.git
+git clone https://gitlab.cerema.fr/rem-d2pn-pn/mcp-grist-server.git
 cd mcp-server-grist
 
 # Installer en mode développement
@@ -216,9 +216,6 @@ python -m mcp_server_grist --transport stdio
 # Mode HTTP streamable (pour intégration web)
 python -m mcp_server_grist --transport streamable-http --host 127.0.0.1 --port 8000 --path /mcp
 
-# Mode Server-Sent Events (déprécié selon MCP 2025-03-26)
-python -m mcp_server_grist --transport sse --host 127.0.0.1 --port 8000 --mount-path /sse
-
 # Active le mode debug avec logging détaillé
 python -m mcp_server_grist --debug
 ```
@@ -240,7 +237,7 @@ Options:
 
 ### Sécurité des transports
 
-Pour les transports HTTP et SSE, nous recommandons :
+Pour les transports HTTP, nous recommandons :
 
 - Utiliser `127.0.0.1` (localhost) plutôt que `0.0.0.0` pour limiter l'accès au réseau local
 - Activer la validation d'origine (`validate_origin`) pour éviter les attaques DNS rebinding
