@@ -38,9 +38,41 @@ mcp-server-grist/
 - Une clé API Grist valide
 - Les packages Python suivants : `fastmcp`, `httpx`, `pydantic`, `python-dotenv`
 
+## Utilisation à la volée
+
+### Via uvx (recommandé)
+
+En utilisant uvx, l'environnement et le téléchargement des paquets se fait à la volée au moment de l'éxécution
+
+```bash
+uvx mcp-server-grist
+```
+### Utilisation avec votre Assitant IA favori qui supporte le protocole MCP
+
+La configuration en json est : 
+
+```json
+{
+    "mcpServers": {
+        "grist-server": {
+            "disabled": false,
+            "timeout": 60,
+            "type": "stdio",
+            "command": "uvx",
+            "args": [
+                "mcp-server-grist"
+            ],
+            "env": {
+                "GRIST_API_KEY": "ta_cle_API_GRIST"
+            }
+        }
+    }
+}
+```  
+
 ## Installation
 
-### Via pip (recommandé)
+### Via pip 
 
 ```bash
 pip install mcp-server-grist
