@@ -113,7 +113,7 @@ Pour contribuer ou personnaliser le serveur :
 
 ```bash
 # Cloner le repository
-git clone https://gitlab.cerema.fr/rem-d2pn-pn/mcp-grist-server.git
+git clone https://github.com/modelcontextprotocol/mcp-server-grist.git
 cd mcp-server-grist
 
 # Installer en mode développement
