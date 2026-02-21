@@ -38,9 +38,41 @@ mcp-server-grist/
 - Une clé API Grist valide
 - Les packages Python suivants : `fastmcp`, `httpx`, `pydantic`, `python-dotenv`
 
+## Utilisation à la volée
+
+### Via uvx (recommandé)
+
+En utilisant uvx, l'environnement et le téléchargement des paquets se fait à la volée au moment de l'éxécution
+
+```bash
+uvx mcp-server-grist
+```
+### Utilisation avec votre Assitant IA favori qui supporte le protocole MCP
+
+La configuration en json est : 
+
+```json
+{
+    "mcpServers": {
+        "grist-server": {
+            "disabled": false,
+            "timeout": 60,
+            "type": "stdio",
+            "command": "uvx",
+            "args": [
+                "mcp-server-grist"
+            ],
+            "env": {
+                "GRIST_API_KEY": "ta_cle_API_GRIST"
+            }
+        }
+    }
+}
+```  
+
 ## Installation
 
-### Via pip (recommandé)
+### Via pip 
 
 ```bash
 pip install mcp-server-grist
@@ -184,9 +216,6 @@ python -m mcp_server_grist --transport stdio
 # Mode HTTP streamable (pour intégration web)
 python -m mcp_server_grist --transport streamable-http --host 127.0.0.1 --port 8000 --path /mcp
 
-# Mode Server-Sent Events (déprécié selon MCP 2025-03-26)
-python -m mcp_server_grist --transport sse --host 127.0.0.1 --port 8000 --mount-path /sse
-
 # Active le mode debug avec logging détaillé
 python -m mcp_server_grist --debug
 ```
@@ -208,7 +237,7 @@ Options:
 
 ### Sécurité des transports
 
-Pour les transports HTTP et SSE, nous recommandons :
+Pour les transports HTTP, nous recommandons :
 
 - Utiliser `127.0.0.1` (localhost) plutôt que `0.0.0.0` pour limiter l'accès au réseau local
 - Activer la validation d'origine (`validate_origin`) pour éviter les attaques DNS rebinding
