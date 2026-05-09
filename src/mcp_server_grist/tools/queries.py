@@ -102,7 +102,17 @@ async def filter_sql_query(
         
         # Ajouter ORDER BY
         if order_by:
-            sql_query += f" ORDER BY {order_by}"
+            if not re.match(r'^[A-Za-z_][A-Za-z0-9_]*(\s+(ASC|DESC))?$', order_by, re.IGNORECASE):
+                return {
+                    "success": False,
+                    "message": f"Paramètre order_by invalide: '{order_by}'. Format attendu: 'colonne' ou 'colonne ASC/DESC'.",
+                    "query": "",
+                    "records": [],
+                    "record_count": 0
+                }
+            sql_query += f' ORDER BY "{order_by.split()[0]}"'
+            if len(order_by.split()) == 2:
+                sql_query += f" {order_by.split()[1].upper()}"
         
         # Ajouter LIMIT
         if limit is not None:
