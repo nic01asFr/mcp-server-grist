@@ -2,6 +2,7 @@
 
 [![PyPI version](https://img.shields.io/pypi/v/mcp-server-grist.svg)](https://pypi.org/project/mcp-server-grist/)
 [![Python versions](https://img.shields.io/pypi/pyversions/mcp-server-grist.svg)](https://pypi.org/project/mcp-server-grist/)
+[![Tests](https://img.shields.io/github/actions/workflow/status/nic01asFr/mcp-server-grist/tests.yml?branch=official&label=tests)](https://github.com/nic01asFr/mcp-server-grist/actions/workflows/tests.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 *[Version française](https://github.com/nic01asFr/mcp-server-grist/blob/official/README.fr.md)*
