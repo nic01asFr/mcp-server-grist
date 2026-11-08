@@ -6,7 +6,6 @@ de la ligne de commande et lance le serveur MCP avec le transport approprié.
 """
 
 import argparse
-import asyncio
 import logging
 import os
 import sys
@@ -99,7 +98,9 @@ def main() -> int:
         # Configurer et lancer le transport approprié
         if args.transport == 'stdio':
             logger.info("Démarrage du serveur MCP avec transport stdio")
-            asyncio.run(mcp.run())
+            # FastMCP.run() est synchrone (il gère sa propre boucle asyncio) :
+            # l'envelopper dans asyncio.run() faisait planter l'arrêt du serveur.
+            mcp.run()
             return 0
         
         elif args.transport == 'streamable-http':
@@ -115,13 +116,12 @@ def main() -> int:
                 f"Démarrage du serveur MCP avec transport streamable-http "
                 f"sur {args.host}:{args.port}{args.path}"
             )
-            asyncio.run(mcp.run(
+            mcp.run(
                 transport="streamable-http",
                 host=args.host,
                 port=args.port,
                 path=args.path
-                # validate_origin n'est pas supporté dans cette version de FastMCP
-            ))
+            )
             return 0
         
         elif args.transport == 'sse':
@@ -143,13 +143,13 @@ def main() -> int:
                 f"Démarrage du serveur MCP avec transport SSE (déprécié) "
                 f"sur {args.host}:{args.port}{args.mount_path}"
             )
-            asyncio.run(mcp.run(
+            # FastMCP attend le chemin SSE dans `path` (mount_path n'existe pas).
+            mcp.run(
                 transport="sse",
                 host=args.host,
                 port=args.port,
-                mount_path=args.mount_path
-                # validate_origin n'est pas supporté dans cette version de FastMCP
-            ))
+                path=args.mount_path
+            )
             return 0
         
         else:

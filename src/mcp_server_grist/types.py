@@ -299,15 +299,34 @@ def parse_schema_dict(schema_dict: Dict[str, Any]) -> SchemaDefinition:
             if isinstance(col_def, str):
                 # Format simplifié: {"col_id": "Type"}
                 col_def = {"type": col_def}
-            
+            if not isinstance(col_def, dict):
+                raise ValueError(
+                    f"Table '{table_id}', colonne '{col_id}': définition invalide "
+                    f"(attendu un objet ou un type)"
+                )
+
+            col_type = col_def.get("type", "Text")
+            target_table = col_def.get("target")
+            # Notation Grist 'Ref:Table' / 'RefList:Table' : même traitement
+            # que {"type": "Ref", "target": "Table"}.
+            if isinstance(col_type, str) and ":" in col_type:
+                base, type_target = col_type.split(":", 1)
+                if base in ("Ref", "RefList") and type_target:
+                    if target_table and target_table != type_target:
+                        raise ValueError(
+                            f"Table '{table_id}', colonne '{col_id}': le type '{col_type}' "
+                            f"contredit target='{target_table}'"
+                        )
+                    col_type, target_table = base, type_target
+
             column = ColumnDefinition(
                 id=col_id,
-                type=col_def.get("type", "Text"),
+                type=col_type,
                 label=col_def.get("label"),
                 formula=col_def.get("formula"),
                 widget_options=col_def.get("widgetOptions"),
                 description=col_def.get("description"),
-                target_table=col_def.get("target"),
+                target_table=target_table,
                 visible_column=col_def.get("visible"),
                 reverse_column=col_def.get("reverse"),
                 choices=col_def.get("choices"),

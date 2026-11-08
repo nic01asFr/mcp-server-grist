@@ -18,6 +18,7 @@ from typing import Any, Dict, List, Optional, Union
 from fastmcp import Context
 
 from ..client import get_client
+from .utils import create_table_with_columns, finalize_columns, set_display_formulas
 
 # Configurer le logger
 logger = logging.getLogger("grist_mcp_server")
@@ -592,8 +593,8 @@ async def create_table(
         columns: Liste des définitions de colonnes (optionnel)
                 Exemple: [
                     {"id": "name", "type": "Text", "label": "Nom"},
-                    {"id": "status", "type": "Choice", "widgetOptions": {"choices": ["A", "B", "C"]}},
-                    {"id": "amount", "type": "Numeric"}
+                    {"id": "status", "type": "Choice", "choices": ["A", "B", "C"]},
+                    {"id": "amount", "type": "Numeric", "description": "Montant en euros"}
                 ]
 
     Returns:
@@ -609,54 +610,24 @@ async def create_table(
                 "message": "Client Grist non configuré"
             }
 
-        # CORRECTION v0.2.0: Format API Grist corrigé
-        # Structure attendue: {"tables": [{"id": "X", "columns": [{"id": "col", "fields": {...}}]}]}
-        prepared_columns = []
-        for col in (columns or []):
-            col_id = col.get("id")
-            if not col_id:
-                continue
+        # v0.2.2: création via l'action AddTable pour connaître les IDs réels,
+        # puis application de ce que Grist ignore à la création
+        # (untieColIdFromLabel, description, colonne affichée). La clé
+        # "choices" est fusionnée dans widgetOptions.
+        result = await create_table_with_columns(client, doc_id, table_id, columns)
+        actual_id = result["table_id"]
 
-            # Séparer l'ID des fields
-            fields = {}
-            for key, value in col.items():
-                if key == "id":
-                    continue
-                # widgetOptions doit être une string JSON
-                if key == "widgetOptions":
-                    if isinstance(value, dict):
-                        fields[key] = json.dumps(value)
-                    elif isinstance(value, str):
-                        fields[key] = value
-                else:
-                    fields[key] = value
-
-            prepared_columns.append({
-                "id": col_id,
-                "fields": fields
-            })
-
-        table_data = {
-            "tables": [
-                {
-                    "id": table_id,  # CORRECTION: "id" au lieu de "tableId"
-                    "columns": prepared_columns
-                }
-            ]
-        }
-
-        result = await client.create_tables(doc_id, table_data)
-
-        # Vérifier si l'ID réel correspond à celui demandé
         response = {
             "success": True,
-            "message": f"Table '{table_id}' créée avec succès",
-            "table": result[0] if result else {"id": table_id}
+            "message": f"Table '{actual_id}' créée avec succès",
+            "table": {"id": actual_id},
+            "columns": result["columns"],
         }
 
-        if result and result[0].get("id") != table_id:
-            actual_id = result[0].get("id")
+        if actual_id != table_id:
             response["warning"] = f"L'ID demandé '{table_id}' a été modifié en '{actual_id}' par Grist"
+        if result["warnings"]:
+            response["warnings"] = result["warnings"]
 
         return response
     except Exception as e:
@@ -836,12 +807,31 @@ async def create_column(
         }
 
         result = await client.create_columns(doc_id, table_id, column_data)
+        actual_id = result[0].get("id", column_id) if result else column_id
 
-        return {
+        # v0.2.2: Grist ignore untieColIdFromLabel et description à la création,
+        # et visibleCol seul ne règle pas l'affichage : on les applique ensuite.
+        # untieColIdFromLabel=False est la valeur par défaut de Grist : ne
+        # l'envoyer que si True (False déclencherait un renommage de l'ID).
+        values: Dict[str, Any] = {}
+        if untie_col_id_from_label:
+            values["untieColIdFromLabel"] = True
+        if description:
+            values["description"] = description
+        if visible_col is not None:
+            values["visibleCol"] = visible_col
+        warnings = await finalize_columns(client, doc_id, table_id, {actual_id: values})
+        if actual_id != column_id:
+            warnings.insert(0, f"L'ID de colonne '{column_id}' a été modifié en '{actual_id}' par Grist")
+
+        response = {
             "success": True,
-            "message": f"Colonne '{column_id}' créée avec succès",
+            "message": f"Colonne '{actual_id}' créée avec succès",
             "column": result[0] if result else {"id": column_id}
         }
+        if warnings:
+            response["warnings"] = warnings
+        return response
     except Exception as e:
         logger.error(f"Error creating column: {e}")
         return {
@@ -936,14 +926,25 @@ async def modify_column(
 
         await client.modify_columns(doc_id, table_id, column_data)
 
+        # v0.2.2: visibleCol seul ne change pas l'affichage d'une référence,
+        # il faut aussi poser la formule d'affichage.
+        warnings = []
+        if visible_col is not None:
+            warnings = await set_display_formulas(
+                client, doc_id, table_id, {new_column_id or column_id: visible_col}
+            )
+
         message = f"Colonne '{column_id}' modifiée avec succès"
         if new_column_id:
             message += f" (renommée en '{new_column_id}')"
 
-        return {
+        response = {
             "success": True,
             "message": message
         }
+        if warnings:
+            response["warnings"] = warnings
+        return response
     except Exception as e:
         logger.error(f"Error modifying column: {e}")
         return {

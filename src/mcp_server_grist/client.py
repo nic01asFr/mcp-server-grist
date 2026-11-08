@@ -218,6 +218,17 @@ class GristClient:
         logger.debug(f"Modifying tables in document {doc_id}")
         await self._request("PATCH", f"/docs/{doc_id}/tables", json_data=tables_data)
 
+    async def apply_user_actions(self, doc_id: str, actions: List[List[Any]]) -> Dict[str, Any]:
+        """
+        Applique des user actions Grist (POST /docs/{doc_id}/apply).
+
+        Grist applique le lot de façon atomique : si une action échoue, aucune
+        n'est appliquée. Retourne la réponse brute, dont `retValues` (une valeur
+        de retour par action, dans l'ordre).
+        """
+        logger.debug(f"Applying {len(actions)} user action(s) to document {doc_id}")
+        return await self._request("POST", f"/docs/{doc_id}/apply", json_data=actions)
+
     # --- Column Methods ---
     
     async def list_columns(self, doc_id: str, table_id: str) -> List[GristColumn]:

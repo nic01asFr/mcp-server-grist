@@ -5,7 +5,97 @@ Tous les changements notables de ce projet seront documentés dans ce fichier.
 Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/),
 et ce projet adhère au [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.2.0] - 2024-12-30
+## [0.2.2] - 2026-11-08
+
+Correctifs des outils de schéma et de colonnes, du démarrage et de Docker, vérifiés sur une vraie
+instance Grist (grist-core 1.7.22, et 1.1.10 pour la compatibilité).
+Aucun paramètre d'outil ne change ; les réponses gagnent seulement des
+clés (`warnings`, `columns`, `reverse_column.two_way`).
+
+### Corrigé
+
+- **Colonne affichée des références** (`create_schema`, `create_reference_column`,
+  `create_column`, `modify_column`) : la formule d'affichage est désormais posée.
+  Auparavant `visibleCol` était enregistré mais Grist affichait l'identifiant de ligne.
+- **Relation inverse (`reverse` / `reverse_column`)** : utilise la référence à double
+  sens native de Grist (`AddReverseColumn`), synchronisée et remplie automatiquement.
+  Auparavant une colonne RefList indépendante et vide était créée (libellé « Tachess »).
+  Sur une instance Grist trop ancienne, repli sur une colonne calculée
+  (`lookupRecords`) en lecture seule, avec avertissement.
+- **`untieColIdFromLabel` et `description`** : appliqués après la création, car Grist
+  les ignore à la création (AddTable/AddColumn). Changer un libellé ne renomme plus l'ID.
+- **`create_table`** : la clé `choices` d'une colonne est fusionnée dans `widgetOptions`
+  (auparavant : erreur HTTP 400). Les IDs réellement attribués par Grist sont renvoyés
+  (`columns`) et signalés s'ils diffèrent ; le libellé garde l'ID demandé (« Prénom »).
+- **`create_schema`** :
+  - la notation `"Ref:Table"` / `"RefList:Table"` est traitée comme une référence
+    (auparavant créée comme colonne simple, sans colonne affichée) ;
+  - relancer le même schéma ne crée plus de doublons : les tables existantes ne sont
+    jamais modifiées (ni colonnes, ni références, ni données) ;
+  - avec `skip_existing=False`, échoue sans rien créer si une table existe déjà ;
+  - les `widgetOptions` des colonnes du schéma sont appliquées.
+- **`validate_schema`** : vérifie que la colonne `visible` existe dans la table cible et
+  que la colonne `reverse` n'existe pas déjà ; signale une référence sans `visible`.
+- **`create_reference_column`** : une erreur d'accès à l'API (clé, réseau) n'est plus
+  présentée comme « table cible inexistante » ; la table source est vérifiée.
+
+- **Démarrage / arrêt du serveur** : le mode stdio ne plante plus à l'arrêt, et le mode
+  `sse` démarre (il échouait sur le paramètre `mount_path`, inconnu de FastMCP).
+- **Image Docker** (ticket #14) : le paquet est installé dans l'image et lancé par la
+  commande `mcp-server-grist` (auparavant : `No module named grist_mcp_server`).
+  L'image tourne sans les droits root et n'embarque plus `.env` ni `.git`.
+- **README** : configuration Claude Desktop (module `mcp_server_grist`), exemples Docker
+  (`-i` au lieu de `-it`, mode HTTP avec `--host 0.0.0.0`), fichier `.env.template`.
+- **Sécurité** : inclut le correctif d'injection SQL dans `order_by` de `filter_sql_query`
+  (fusionné après la 0.2.1, jamais publié jusqu'ici).
+
+### Modifié
+
+- Dépendance `fastmcp>=2.14,<5` (vérifiée sur 2.14, 3.0, 3.4 et 4.1 ; les versions
+  antérieures ne s'installent plus avec pydantic actuel).
+- Publication sur PyPI déclenchée par une release GitHub (et non plus par chaque push
+  sur `official`), après les tests et des contrôles de version. Voir `CONTRIBUTING.md`.
+- Workflows : suppression des doublons et fichiers obsolètes ; tests sur Python 3.10 à 3.13.
+- Tests : suppression des tests de l'ancien module `grist_mcp_server`, réécriture de
+  `test_security.py` et `test_transport.py` pour le code actuel. Suite entièrement au vert.
+
+### Ajouté
+
+- `GristClient.apply_user_actions(doc_id, actions)` : appel de `POST /docs/{doc}/apply`.
+- Tests `tests/test_schema_tools.py`.
+- Dépendances de test : `pip install -e ".[dev]"`.
+- `docs/tools-reference.mdx` : référence complète des 54 outils, générée depuis le code
+  (`scripts/generate_tools_reference.py`) ; un test vérifie qu'elle reste à jour, et que
+  le README ne cite que des outils et des paramètres existants.
+
+### Documentation
+
+- README (page PyPI) : liste des outils alignée sur les 54 outils réels (ajout des outils
+  de schéma, retrait de 5 outils inexistants), exemples corrigés, Python 3.10+,
+  configuration Claude Desktop sans le wrapper Node.js.
+- `docs/index.mdx` réécrit (liens vers ce dépôt, Python 3.10+).
+- Auteur du paquet : `nic01asFr`.
+
+### Supprimé
+
+- `npm-wrapper/` : jamais publié sur npm, son nom (`@modelcontextprotocol/server-grist`)
+  n'était pas disponible. Les modes `uvx`, `pip` et Docker le remplacent.
+- `docker-compose.yml` : clé `version` obsolète, réseau inutilisé, `tty` (gênant en stdio).
+
+## [0.2.1] - 2026-02-21
+
+### Modifié
+
+- Python 3.10 minimum (`requires-python = ">=3.10"`).
+- README : utilisation à la volée avec `uvx`, URL du dépôt.
+- `docker-compose.yml` : retrait du service SSE.
+
+## [0.2.0] - 2025-12-30
+
+### Corrigé
+
+- Le paramètre `ctx` n'est plus exposé aux clients MCP : il n'est plus nécessaire de
+  passer `ctx=null` à chaque appel d'outil.
 
 ### Ajouté
 
@@ -77,6 +167,9 @@ et ce projet adhère au [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   - `untie_col_id_from_label: bool`
   - `description: str`
 
+Note : dans cette version, `visible_col`, `untie_col_id_from_label` et `description`
+étaient transmis à Grist mais sans effet réel ; ils ne fonctionnent que depuis la 0.2.2.
+
 ### Structure du projet
 
 ```
@@ -87,7 +180,7 @@ src/mcp_server_grist/
 │   ├── utils.py          # NOUVEAU: Utilitaires
 │   ├── administration.py # MODIFIÉ: Corrections
 │   ├── schema.py         # NOUVEAU: Outils schéma
-│   └── downloads.py      # MODIFIÉ: Corrections
+│   └── export.py         # MODIFIÉ: Corrections
 └── ...
 ```
 

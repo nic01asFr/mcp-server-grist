@@ -1,241 +1,1559 @@
 ---
 title: "Référence des outils"
-description: "Documentation détaillée des outils MCP Grist"
+description: "Liste complète des outils MCP Grist, avec leurs paramètres"
 ---
+
+{/* Fichier généré par scripts/generate_tools_reference.py : ne pas modifier à la main. */}
 
 # Référence des outils MCP Grist
 
-Ce document fournit une référence détaillée de tous les outils disponibles dans le serveur MCP Grist.
+Le serveur expose **54 outils**. Le paramètre `ctx` des fonctions Python
+est fourni par le serveur : les clients MCP ne le voient pas.
 
 ## Navigation
 
+- [`list_organizations`](#list_organizations)
+- [`describe_organization`](#describe_organization)
+- [`list_workspaces`](#list_workspaces)
+- [`describe_workspace`](#describe_workspace)
+- [`list_documents`](#list_documents)
+- [`describe_document`](#describe_document)
+- [`list_tables`](#list_tables)
+- [`list_columns`](#list_columns)
+- [`list_records`](#list_records)
+- [`get_table_schema`](#get_table_schema)
+
 ### list_organizations
 
+Aucun paramètre.
+
+```text
 Liste toutes les organisations Grist accessibles.
 
-```python
-async def list_organizations(ctx=None) -> Dict[str, Any]:
-    """
-    Liste toutes les organisations Grist accessibles.
-    
-    Prérequis:
-        Aucun - ce tool est le point d'entrée principal pour la navigation.
-    
-    Returns:
-        Dict avec:
-            - success (bool): Indique si l'opération a réussi
-            - message (str): Message de succès ou d'erreur
-            - organizations (List): Liste des organisations disponibles
-    """
+Prérequis:
+    Aucun - ce tool est le point d'entrée principal pour la navigation.
+
+Flux de travail typique:
+    1. list_organizations() → obtenir tous les org_id disponibles
+    2. list_workspaces(org_id) → explorer les espaces de travail
+
+Returns:
+    Dict avec:
+        - success (bool): Indique si l'opération a réussi
+        - message (str): Message de succès ou d'erreur
+        - organizations (List): Liste des organisations disponibles
 ```
 
 ### describe_organization
 
+| Paramètre | Type | Requis | Défaut |
+|---|---|---|---|
+| `org_id` | `Union[int, str]` | oui |  |
+
+```text
 Obtient des informations détaillées sur une organisation spécifique.
 
-```python
-async def describe_organization(org_id: Union[int, str], ctx) -> Dict[str, Any]:
-    """
-    Obtient des informations détaillées sur une organisation spécifique.
+Prérequis:
+    - list_organizations: Pour obtenir un org_id valide
+
+Flux de travail typique:
+    1. list_organizations() → identifier l'organisation
+    2. describe_organization(org_id) → obtenir les détails
+
+Args:
+    org_id: L'ID de l'organisation à décrire
     
-    Args:
-        org_id: L'ID de l'organisation à décrire
-        
-    Returns:
-        Dict avec:
-            - success (bool): Indique si l'opération a réussi
-            - message (str): Message de succès ou d'erreur
-            - organization (Dict): Détails de l'organisation
-    """
+Returns:
+    Dict avec:
+        - success (bool): Indique si l'opération a réussi
+        - message (str): Message de succès ou d'erreur
+        - organization (Dict): Détails de l'organisation
 ```
 
 ### list_workspaces
 
+| Paramètre | Type | Requis | Défaut |
+|---|---|---|---|
+| `org_id` | `Union[int, str]` | oui |  |
+
+```text
 Liste tous les espaces de travail dans une organisation Grist.
 
-```python
-async def list_workspaces(org_id: Union[int, str], ctx) -> Dict[str, Any]:
-    """
-    Liste tous les espaces de travail dans une organisation Grist.
+Prérequis:
+    - list_organizations: Pour obtenir un org_id valide
     
-    Args:
-        org_id: L'ID de l'organisation (entier ou sous-domaine string)
-        
-    Returns:
-        Dict avec:
-            - success (bool): Indique si l'opération a réussi
-            - message (str): Message de succès ou d'erreur
-            - workspaces (List): Liste des espaces de travail
-    """
+Flux de travail typique:
+    1. list_organizations() → choisir org_id
+    2. list_workspaces(org_id) → obtenir workspace_id
+    3. list_documents(workspace_id) → naviguer dans les documents
+
+Voir aussi:
+    - create_workspace: Pour créer un nouvel espace de travail
+    - describe_workspace: Pour obtenir les détails d'un workspace
+    - modify_workspace_access: Pour gérer les permissions
+
+Args:
+    org_id: L'ID de l'organisation (entier ou sous-domaine string)
+    
+Returns:
+    Dict avec:
+        - success (bool): Indique si l'opération a réussi
+        - message (str): Message de succès ou d'erreur
+        - workspaces (List): Liste des espaces de travail
 ```
 
-## Requêtes SQL
+### describe_workspace
 
-### execute_sql_query
+| Paramètre | Type | Requis | Défaut |
+|---|---|---|---|
+| `workspace_id` | `int` | oui |  |
 
-Exécute une requête SQL personnalisée sur un document Grist.
+```text
+Obtient des informations détaillées sur un espace de travail spécifique.
 
-```python
-async def execute_sql_query(
-    doc_id: str,
-    sql_query: str,
-    parameters: Optional[List[Any]] = None,
-    timeout_ms: Optional[int] = 1000,
-    ctx=None
-) -> Dict[str, Any]:
-    """
-    Exécute une requête SQL personnalisée sur un document Grist.
+Prérequis:
+    - list_workspaces: Pour obtenir un workspace_id valide
+
+Flux de travail typique:
+    1. list_organizations() → identifier l'organisation
+    2. list_workspaces(org_id) → identifier l'espace de travail
+    3. describe_workspace(workspace_id) → obtenir les détails
+
+Args:
+    workspace_id: L'ID de l'espace de travail à décrire
     
-    Args:
-        doc_id: ID du document
-        sql_query: Requête SQL à exécuter (SELECT uniquement)
-        parameters: Liste des paramètres pour les placeholders '?' dans la requête
-        timeout_ms: Délai d'expiration en millisecondes (défaut: 1000)
-        
-    Returns:
-        Dict avec les résultats de la requête et métadonnées
-    """
+Returns:
+    Dict avec:
+        - success (bool): Indique si l'opération a réussi
+        - message (str): Message de succès ou d'erreur
+        - workspace (Dict): Détails de l'espace de travail
 ```
 
-### filter_sql_query
+### list_documents
 
-Exécute une requête SQL de filtrage sur une table Grist.
+| Paramètre | Type | Requis | Défaut |
+|---|---|---|---|
+| `workspace_id` | `int` | oui |  |
 
-```python
-async def filter_sql_query(
-    doc_id: str,
-    table_id: str,
-    columns: Optional[List[str]] = None,
-    where_conditions: Optional[Dict[str, Any]] = None,
-    order_by: Optional[str] = None,
-    limit: Optional[int] = None,
-    ctx=None
-) -> Dict[str, Any]:
-    """
-    Exécute une requête SQL de filtrage sur une table Grist.
+```text
+Liste tous les documents dans un espace de travail Grist.
+
+Prérequis:
+    - list_workspaces: Pour obtenir un workspace_id valide
     
-    Args:
-        doc_id: ID du document
-        table_id: ID de la table à requêter
-        columns: Liste des colonnes à retourner (None = toutes)
-        where_conditions: Dict de conditions (AND implicite entre conditions)
-        order_by: Colonne de tri avec direction optionnelle (ex: "nom DESC")
-        limit: Nombre max de résultats
-        
-    Returns:
-        Dict avec les enregistrements filtrés et métadonnées de requête
-    """
+Flux de travail typique:
+    1. list_workspaces(org_id) → obtenir workspace_id
+    2. list_documents(workspace_id) → obtenir doc_id
+    3. list_tables(doc_id) → explorer les tables du document
+
+Voir aussi:
+    - create_document: Pour créer un nouveau document
+    - describe_document: Pour obtenir les détails d'un document
+    - modify_document_access: Pour gérer les permissions
+
+Args:
+    workspace_id: L'ID de l'espace de travail
+    
+Returns:
+    Dict avec:
+        - success (bool): Indique si l'opération a réussi
+        - message (str): Message de succès ou d'erreur
+        - documents (List): Liste des documents
+```
+
+### describe_document
+
+| Paramètre | Type | Requis | Défaut |
+|---|---|---|---|
+| `doc_id` | `str` | oui |  |
+
+```text
+Obtient des informations détaillées sur un document spécifique.
+
+Prérequis:
+    - list_documents: Pour obtenir un doc_id valide
+
+Flux de travail typique:
+    1. list_documents(workspace_id) → identifier le document
+    2. describe_document(doc_id) → obtenir les détails complets
+
+Args:
+    doc_id: L'ID du document à décrire
+    
+Returns:
+    Dict avec:
+        - success (bool): Indique si l'opération a réussi
+        - message (str): Message de succès ou d'erreur
+        - document (Dict): Détails du document
+```
+
+### list_tables
+
+| Paramètre | Type | Requis | Défaut |
+|---|---|---|---|
+| `doc_id` | `str` | oui |  |
+
+```text
+Liste toutes les tables dans un document Grist.
+
+Prérequis:
+    - list_documents: Pour obtenir un doc_id valide
+    
+Flux de travail typique:
+    1. list_documents(workspace_id) → obtenir doc_id
+    2. list_tables(doc_id) → obtenir table_id
+    3. list_columns(doc_id, table_id) → explorer la structure
+
+Voir aussi:
+    - create_table: Pour créer une nouvelle table
+    - filter_sql_query: Pour requêter les données d'une table
+
+Args:
+    doc_id: L'ID du document
+    
+Returns:
+    Dict avec:
+        - success (bool): Indique si l'opération a réussi
+        - message (str): Message de succès ou d'erreur
+        - tables (List): Liste des tables
+```
+
+### list_columns
+
+| Paramètre | Type | Requis | Défaut |
+|---|---|---|---|
+| `doc_id` | `str` | oui |  |
+| `table_id` | `str` | oui |  |
+
+```text
+Liste toutes les colonnes dans une table Grist.
+
+Prérequis:
+    - list_tables: Pour obtenir un table_id valide
+    
+Flux de travail typique:
+    1. list_tables(doc_id) → obtenir table_id
+    2. list_columns(doc_id, table_id) → explorer la structure
+    3. list_records(doc_id, table_id) → obtenir les données
+
+Voir aussi:
+    - create_column: Pour ajouter une nouvelle colonne
+    - modify_column: Pour modifier une colonne existante
+
+Args:
+    doc_id: L'ID du document
+    table_id: L'ID de la table
+    
+Returns:
+    Dict avec:
+        - success (bool): Indique si l'opération a réussi
+        - message (str): Message de succès ou d'erreur
+        - columns (List): Liste des colonnes
+```
+
+### list_records
+
+| Paramètre | Type | Requis | Défaut |
+|---|---|---|---|
+| `doc_id` | `str` | oui |  |
+| `table_id` | `str` | oui |  |
+| `sort` | `Optional[str]` | non | `None` |
+| `limit` | `Optional[int]` | non | `None` |
+
+```text
+Liste les enregistrements dans une table Grist avec tri et limitation optionnels.
+
+Prérequis:
+    - list_tables: Pour obtenir un table_id valide
+    
+Flux de travail typique:
+    1. list_tables(doc_id) → obtenir table_id
+    2. list_columns(doc_id, table_id) → comprendre la structure
+    3. list_records(doc_id, table_id, sort="nom", limit=10) → obtenir les données
+
+Voir aussi:
+    - filter_sql_query: Alternative avec filtrage avancé
+    - add_grist_records: Pour ajouter des enregistrements
+
+Args:
+    doc_id: L'ID du document Grist
+    table_id: L'ID de la table
+    sort: Colonne de tri (optionnel, format: "colonne" ou "colonne:asc/desc")
+    limit: Nombre maximum d'enregistrements à retourner (optionnel)
+    
+Returns:
+    Dict avec:
+        - success (bool): Indique si l'opération a réussi
+        - message (str): Message de succès ou d'erreur
+        - records (List): Liste des enregistrements
+        - record_count (int): Nombre total d'enregistrements retournés
+```
+
+### get_table_schema
+
+| Paramètre | Type | Requis | Défaut |
+|---|---|---|---|
+| `doc_id` | `str` | oui |  |
+| `table_id` | `str` | oui |  |
+
+```text
+Obtient le schéma détaillé d'une table Grist.
+
+Prérequis:
+    - list_tables: Pour obtenir un table_id valide
+    
+Flux de travail typique:
+    1. list_tables(doc_id) → obtenir table_id
+    2. get_table_schema(doc_id, table_id) → obtenir la structure détaillée
+
+Voir aussi:
+    - list_columns: Pour une liste plus simple des colonnes
+
+Args:
+    doc_id: L'ID du document
+    table_id: L'ID de la table
+    
+Returns:
+    Dict avec:
+        - success (bool): Indique si l'opération a réussi
+        - message (str): Message de succès ou d'erreur
+        - schema (Dict): Schéma détaillé de la table au format frictionless
 ```
 
 ## Enregistrements
 
+- [`add_grist_records`](#add_grist_records)
+- [`add_grist_records_safe`](#add_grist_records_safe)
+- [`update_grist_records`](#update_grist_records)
+- [`delete_grist_records`](#delete_grist_records)
+
 ### add_grist_records
 
+| Paramètre | Type | Requis | Défaut |
+|---|---|---|---|
+| `doc_id` | `str` | oui |  |
+| `table_id` | `str` | oui |  |
+| `records` | `List[Dict[str, Any]]` | oui |  |
+
+```text
 Ajoute des enregistrements à une table Grist.
 
-```python
-async def add_grist_records(
-    doc_id: str,
-    table_id: str,
-    records: List[Dict[str, Any]],
-    ctx=None
-) -> Dict[str, Any]:
-    """
-    Ajoute des enregistrements à une table Grist.
+Args:
+    doc_id: L'ID du document Grist
+    table_id: L'ID de la table
+    records: Liste des enregistrements à ajouter. Chaque enregistrement est un dictionnaire
+            où les clés sont les noms des colonnes et les valeurs sont les données.
+            Exemple: [{"nom": "Dupont", "prénom": "Jean", "âge": 35}]
+            
+Returns:
+    Dict avec statut, message et IDs des enregistrements créés:
+    {
+        "success": True/False,
+        "message": "Message de succès ou d'erreur",
+        "record_ids": [1, 2, 3]  # IDs des enregistrements créés
+    }
+```
+
+### add_grist_records_safe
+
+| Paramètre | Type | Requis | Défaut |
+|---|---|---|---|
+| `doc_id` | `str` | oui |  |
+| `table_id` | `str` | oui |  |
+| `records` | `List[Dict[str, Any]]` | oui |  |
+
+```text
+Ajoute des enregistrements avec validation préalable de la structure.
+
+Cette version sécurisée valide l'existence de la table et des colonnes
+avant d'ajouter les enregistrements, et suggère des corrections si nécessaire.
+
+Prérequis:
+    - list_tables, list_columns: effectués automatiquement en interne
+
+Flux de travail typique:
+    1. get_table_schema(doc_id, table_id) → comprendre les types
+    2. add_grist_records_safe(doc_id, table_id, records) → insertion validée
+    3. list_records(doc_id, table_id, limit=5) → vérifier le résultat
+
+Args:
+    doc_id: L'ID du document
+    table_id: L'ID de la table
+    records: Liste des enregistrements à ajouter
     
-    Args:
-        doc_id: L'ID du document Grist
-        table_id: L'ID de la table
-        records: Liste des enregistrements à ajouter
-                
-    Returns:
-        Dict avec statut, message et IDs des enregistrements créés
-    """
+Returns:
+    Dict avec statut, message, éventuellement des suggestions de correction,
+    et IDs des enregistrements créés si l'opération a réussi
+```
+
+### update_grist_records
+
+| Paramètre | Type | Requis | Défaut |
+|---|---|---|---|
+| `doc_id` | `str` | oui |  |
+| `table_id` | `str` | oui |  |
+| `records` | `List[Dict[str, Any]]` | oui |  |
+
+```text
+Met à jour des enregistrements existants dans une table Grist.
+
+Prérequis:
+    - list_records: Pour obtenir les IDs des enregistrements à mettre à jour
+
+Flux de travail typique:
+    1. list_records(doc_id, table_id) → obtenir les IDs
+    2. update_grist_records(doc_id, table_id, records_with_id) → mise à jour
+
+Args:
+    doc_id: L'ID du document
+    table_id: L'ID de la table
+    records: Liste des enregistrements à mettre à jour. 
+            Chaque enregistrement doit contenir un champ 'id'
+            Exemple: [{"id": 1, "nom": "Dupont", "prénom": "Jean"}]
+            
+Returns:
+    Dict avec statut, message et IDs des enregistrements mis à jour
+```
+
+### delete_grist_records
+
+| Paramètre | Type | Requis | Défaut |
+|---|---|---|---|
+| `doc_id` | `str` | oui |  |
+| `table_id` | `str` | oui |  |
+| `record_ids` | `List[int]` | oui |  |
+
+```text
+Supprime des enregistrements d'une table Grist.
+
+Prérequis:
+    - list_records: Pour obtenir les IDs des enregistrements à supprimer
+
+Flux de travail typique:
+    1. list_records(doc_id, table_id) → obtenir les IDs
+    2. delete_grist_records(doc_id, table_id, record_ids) → suppression
+
+Args:
+    doc_id: L'ID du document
+    table_id: L'ID de la table
+    record_ids: Liste des IDs des enregistrements à supprimer
+            
+Returns:
+    Dict avec statut et message de confirmation
+```
+
+## Requêtes SQL
+
+- [`filter_sql_query`](#filter_sql_query)
+- [`execute_sql_query`](#execute_sql_query)
+
+### filter_sql_query
+
+| Paramètre | Type | Requis | Défaut |
+|---|---|---|---|
+| `doc_id` | `str` | oui |  |
+| `table_id` | `str` | oui |  |
+| `columns` | `Optional[List[str]]` | non | `None` |
+| `where_conditions` | `Optional[Dict[str, Any]]` | non | `None` |
+| `order_by` | `Optional[str]` | non | `None` |
+| `limit` | `Optional[int]` | non | `None` |
+
+```text
+Exécute une requête SQL de filtrage sur une table Grist.
+
+Version simplifiée pour requêtes SQL courantes sans écrire de SQL.
+Pour requêtes complexes, utiliser execute_sql_query.
+
+Prérequis recommandés:
+    - list_tables(doc_id) : Vérifier l'existence de la table
+    - list_columns(doc_id, table_id) : Connaître les colonnes disponibles
+
+Alternative à:
+    - list_records : Quand vous avez besoin de filtrer/trier
+    - execute_sql_query : Version simplifiée pour cas courants
+
+Flux de travail typique:
+    1. list_columns(doc_id, table_id) → identifier les colonnes
+    2. filter_sql_query(doc_id, table_id, 
+                      where_conditions={"status": "actif"},
+                      order_by="date_creation DESC",
+                      limit=10)
+    3. Traiter les enregistrements retournés
+
+Cas d'usage:
+    - Filtrage simple: where_conditions={"status": "actif"}
+    - Filtrage multiple: where_conditions={"status": "actif", "type": "A"}
+    - Tri: order_by="nom" ou order_by="valeur DESC"
+    - Pagination: limit=20
+    - Colonnes spécifiques: columns=["nom", "valeur", "date"]
+
+Args:
+    doc_id: ID du document
+    table_id: ID de la table à requêter
+    columns: Liste des colonnes à retourner (None = toutes)
+    where_conditions: Dict de conditions (AND implicite entre conditions)
+    order_by: Colonne de tri avec direction optionnelle (ex: "nom DESC")
+    limit: Nombre max de résultats
+    
+Returns:
+    Dict avec les enregistrements filtrés et métadonnées de requête
+```
+
+### execute_sql_query
+
+| Paramètre | Type | Requis | Défaut |
+|---|---|---|---|
+| `doc_id` | `str` | oui |  |
+| `sql_query` | `str` | oui |  |
+| `parameters` | `Optional[List[Any]]` | non | `None` |
+| `timeout_ms` | `Optional[int]` | non | `1000` |
+
+```text
+Exécute une requête SQL personnalisée sur un document Grist.
+
+Permet d'exécuter des requêtes SQL complexes avec jointures,
+agrégations et sous-requêtes.
+
+Prérequis:
+    - list_tables: Pour connaître les noms des tables disponibles
+    - list_columns: Pour connaître les noms des colonnes à requêter
+
+Flux de travail typique:
+    1. list_tables(doc_id) → identifier les tables
+    2. list_columns(doc_id, table_id) → identifier les colonnes
+    3. execute_sql_query(doc_id, "SELECT t1.col1, t2.col2 FROM Table1 t1 
+                                JOIN Table2 t2 ON t1.id = t2.ref_id
+                                WHERE t1.status = ?", 
+                      parameters=["active"])
+
+Sécurité:
+    - Utilisez toujours des paramètres liés (?) pour les valeurs variables
+    - Seules les requêtes SELECT sont autorisées
+
+Args:
+    doc_id: ID du document
+    sql_query: Requête SQL à exécuter (SELECT uniquement)
+    parameters: Liste des paramètres pour les placeholders '?' dans la requête
+    timeout_ms: Délai d'expiration en millisecondes (défaut: 1000)
+    
+Returns:
+    Dict avec les résultats de la requête et métadonnées
+```
+
+## Administration
+
+- [`modify_organization`](#modify_organization)
+- [`delete_organization`](#delete_organization)
+- [`create_workspace`](#create_workspace)
+- [`modify_workspace`](#modify_workspace)
+- [`delete_workspace`](#delete_workspace)
+- [`create_document`](#create_document)
+- [`modify_document`](#modify_document)
+- [`delete_document`](#delete_document)
+- [`move_document`](#move_document)
+- [`force_reload_document`](#force_reload_document)
+- [`delete_document_history`](#delete_document_history)
+- [`create_table`](#create_table)
+- [`modify_table`](#modify_table)
+- [`create_column`](#create_column)
+- [`modify_column`](#modify_column)
+- [`delete_column`](#delete_column)
+
+### modify_organization
+
+| Paramètre | Type | Requis | Défaut |
+|---|---|---|---|
+| `org_id` | `Union[int, str]` | oui |  |
+| `name` | `Optional[str]` | non | `None` |
+
+```text
+Modifie les propriétés d'une organisation.
+
+Prérequis:
+    - list_organizations: Pour obtenir un org_id valide
+
+Args:
+    org_id: L'ID de l'organisation à modifier
+    name: Nouveau nom pour l'organisation (optionnel)
+    
+Returns:
+    Dict avec statut et message de l'opération
+```
+
+### delete_organization
+
+| Paramètre | Type | Requis | Défaut |
+|---|---|---|---|
+| `org_id` | `Union[int, str]` | oui |  |
+
+```text
+Supprime une organisation.
+
+Attention:
+    Cette action est irréversible et supprimera tous les espaces de travail,
+    documents et données associés à cette organisation.
+
+Args:
+    org_id: L'ID de l'organisation à supprimer
+    
+Returns:
+    Dict avec statut et message de l'opération
+```
+
+### create_workspace
+
+| Paramètre | Type | Requis | Défaut |
+|---|---|---|---|
+| `org_id` | `Union[int, str]` | oui |  |
+| `name` | `str` | oui |  |
+
+```text
+Crée un nouvel espace de travail dans une organisation.
+
+Prérequis:
+    - list_organizations: Pour obtenir un org_id valide
+
+Flux de travail typique:
+    1. list_organizations() → obtenir org_id
+    2. create_workspace(org_id, "Nom") → créer l'espace de travail
+    3. list_workspaces(org_id) → vérifier la création
+
+Args:
+    org_id: L'ID de l'organisation
+    name: Nom du nouvel espace de travail
+    
+Returns:
+    Dict avec statut, message et ID de l'espace de travail créé
+```
+
+### modify_workspace
+
+| Paramètre | Type | Requis | Défaut |
+|---|---|---|---|
+| `workspace_id` | `int` | oui |  |
+| `name` | `Optional[str]` | non | `None` |
+
+```text
+Modifie les propriétés d'un espace de travail.
+
+Prérequis:
+    - list_workspaces: Pour obtenir un workspace_id valide
+
+Args:
+    workspace_id: L'ID de l'espace de travail à modifier
+    name: Nouveau nom pour l'espace de travail (optionnel)
+    
+Returns:
+    Dict avec statut et message de l'opération
+```
+
+### delete_workspace
+
+| Paramètre | Type | Requis | Défaut |
+|---|---|---|---|
+| `workspace_id` | `int` | oui |  |
+
+```text
+Supprime un espace de travail.
+
+Attention:
+    Cette action est irréversible et supprimera tous les documents
+    et données associés à cet espace de travail.
+
+Args:
+    workspace_id: L'ID de l'espace de travail à supprimer
+    
+Returns:
+    Dict avec statut et message de l'opération
+```
+
+### create_document
+
+| Paramètre | Type | Requis | Défaut |
+|---|---|---|---|
+| `workspace_id` | `int` | oui |  |
+| `name` | `str` | oui |  |
+
+```text
+Crée un nouveau document dans un espace de travail.
+
+Prérequis:
+    - list_workspaces: Pour obtenir un workspace_id valide
+
+Flux de travail typique:
+    1. list_workspaces(org_id) → obtenir workspace_id
+    2. create_document(workspace_id, "Nom") → créer le document
+    3. list_documents(workspace_id) → vérifier la création
+
+Args:
+    workspace_id: L'ID de l'espace de travail
+    name: Nom du nouveau document
+    
+Returns:
+    Dict avec statut, message et ID du document créé
+```
+
+### modify_document
+
+| Paramètre | Type | Requis | Défaut |
+|---|---|---|---|
+| `doc_id` | `str` | oui |  |
+| `name` | `Optional[str]` | non | `None` |
+| `is_pinned` | `Optional[bool]` | non | `None` |
+
+```text
+Modifie les propriétés d'un document.
+
+Prérequis:
+    - list_documents: Pour obtenir un doc_id valide
+
+Args:
+    doc_id: L'ID du document à modifier
+    name: Nouveau nom pour le document (optionnel)
+    is_pinned: État d'épinglage du document (optionnel)
+    
+Returns:
+    Dict avec statut et message de l'opération
+```
+
+### delete_document
+
+| Paramètre | Type | Requis | Défaut |
+|---|---|---|---|
+| `doc_id` | `str` | oui |  |
+
+```text
+Supprime un document.
+
+Attention:
+    Cette action est irréversible et supprimera toutes les données
+    associées à ce document.
+
+Args:
+    doc_id: L'ID du document à supprimer
+    
+Returns:
+    Dict avec statut et message de l'opération
+```
+
+### move_document
+
+| Paramètre | Type | Requis | Défaut |
+|---|---|---|---|
+| `doc_id` | `str` | oui |  |
+| `target_workspace_id` | `int` | oui |  |
+
+```text
+Déplace un document vers un autre espace de travail.
+
+Prérequis:
+    - list_documents: Pour obtenir un doc_id valide
+    - list_workspaces: Pour obtenir un workspace_id valide
+
+Args:
+    doc_id: L'ID du document à déplacer
+    target_workspace_id: L'ID de l'espace de travail de destination
+    
+Returns:
+    Dict avec statut et message de l'opération
+```
+
+### force_reload_document
+
+| Paramètre | Type | Requis | Défaut |
+|---|---|---|---|
+| `doc_id` | `str` | oui |  |
+
+```text
+Force le rechargement d'un document.
+
+Utile en cas d'incohérences ou de problèmes de synchronisation.
+
+Args:
+    doc_id: L'ID du document à recharger
+    
+Returns:
+    Dict avec statut et message de l'opération
+```
+
+### delete_document_history
+
+| Paramètre | Type | Requis | Défaut |
+|---|---|---|---|
+| `doc_id` | `str` | oui |  |
+| `keep` | `int` | non | `1000` |
+
+```text
+Supprime l'historique d'un document, ne conservant que les dernières actions.
+
+Utile pour réduire la taille des documents volumineux.
+
+Args:
+    doc_id: L'ID du document
+    keep: Nombre d'actions récentes à conserver (défaut: 1000)
+    
+Returns:
+    Dict avec statut et message de l'opération
+```
+
+### create_table
+
+| Paramètre | Type | Requis | Défaut |
+|---|---|---|---|
+| `doc_id` | `str` | oui |  |
+| `table_id` | `str` | oui |  |
+| `columns` | `Optional[List[Dict[str, Any]]]` | non | `None` |
+
+```text
+Crée une nouvelle table dans un document.
+
+Prérequis:
+    - list_documents: Pour obtenir un doc_id valide
+
+Flux de travail typique:
+    1. list_documents(workspace_id) → obtenir doc_id
+    2. create_table(doc_id, "TableName", columns=[...]) → créer la table
+    3. list_tables(doc_id) → vérifier la création
+
+Args:
+    doc_id: L'ID du document
+    table_id: ID de la nouvelle table (doit être unique dans le document)
+    columns: Liste des définitions de colonnes (optionnel)
+            Exemple: [
+                {"id": "name", "type": "Text", "label": "Nom"},
+                {"id": "status", "type": "Choice", "choices": ["A", "B", "C"]},
+                {"id": "amount", "type": "Numeric", "description": "Montant en euros"}
+            ]
+
+Returns:
+    Dict avec statut, message et détails de la table créée
+```
+
+### modify_table
+
+| Paramètre | Type | Requis | Défaut |
+|---|---|---|---|
+| `doc_id` | `str` | oui |  |
+| `table_id` | `str` | oui |  |
+| `new_table_id` | `Optional[str]` | non | `None` |
+
+```text
+Modifie les propriétés d'une table.
+
+Prérequis:
+    - list_tables: Pour obtenir un table_id valide
+
+Args:
+    doc_id: L'ID du document
+    table_id: L'ID actuel de la table
+    new_table_id: Nouvel ID pour la table (optionnel)
+
+Returns:
+    Dict avec statut et message de l'opération
+```
+
+### create_column
+
+| Paramètre | Type | Requis | Défaut |
+|---|---|---|---|
+| `doc_id` | `str` | oui |  |
+| `table_id` | `str` | oui |  |
+| `column_id` | `str` | oui |  |
+| `column_type` | `str` | non | `'Text'` |
+| `label` | `Optional[str]` | non | `None` |
+| `formula` | `Optional[str]` | non | `None` |
+| `widget_options` | `Optional[Dict[str, Any]]` | non | `None` |
+| `visible_col` | `Optional[int]` | non | `None` |
+| `untie_col_id_from_label` | `bool` | non | `True` |
+| `description` | `Optional[str]` | non | `None` |
+| `choices` | `Optional[List[str]]` | non | `None` |
+
+```text
+Crée une nouvelle colonne dans une table.
+
+Prérequis:
+    - list_tables: Pour obtenir un table_id valide
+
+Flux de travail typique:
+    1. list_tables(doc_id) → obtenir table_id
+    2. create_column(doc_id, table_id, "col_name", "Text", "Nom") → créer la colonne
+    3. list_columns(doc_id, table_id) → vérifier la création
+
+Args:
+    doc_id: L'ID du document
+    table_id: L'ID de la table
+    column_id: ID de la nouvelle colonne (doit être unique dans la table)
+    column_type: Type de données. Types supportés:
+        - Text, Numeric, Int, Bool, Date, DateTime
+        - Choice, ChoiceList (avec paramètre choices)
+        - Ref:TableId, RefList:TableId (références)
+        - Attachments
+    label: Libellé d'affichage de la colonne (optionnel)
+    formula: Formule Python pour colonnes calculées (optionnel)
+    widget_options: Options d'affichage comme dict (optionnel)
+    visible_col: colRef de la colonne à afficher pour les Ref (optionnel)
+    untie_col_id_from_label: Dissocier l'ID du label (défaut: True)
+    description: Description de la colonne (optionnel)
+    choices: Liste de choix pour Choice/ChoiceList (optionnel)
+
+Returns:
+    Dict avec statut, message et détails de la colonne créée
+
+Examples:
+    # Colonne texte simple
+    create_column(doc_id, "Table1", "name", "Text", label="Nom")
+
+    # Colonne choix
+    create_column(doc_id, "Table1", "status", "Choice",
+                  choices=["Actif", "Inactif", "En attente"])
+
+    # Colonne référence
+    create_column(doc_id, "Table1", "owner", "Ref:Users",
+                  label="Propriétaire", visible_col=5)
+
+    # Colonne calculée
+    create_column(doc_id, "Table1", "full_name", "Text",
+                  formula="$first_name + ' ' + $last_name")
+```
+
+### modify_column
+
+| Paramètre | Type | Requis | Défaut |
+|---|---|---|---|
+| `doc_id` | `str` | oui |  |
+| `table_id` | `str` | oui |  |
+| `column_id` | `str` | oui |  |
+| `new_column_id` | `Optional[str]` | non | `None` |
+| `column_type` | `Optional[str]` | non | `None` |
+| `label` | `Optional[str]` | non | `None` |
+| `formula` | `Optional[str]` | non | `None` |
+| `widget_options` | `Optional[Dict[str, Any]]` | non | `None` |
+| `visible_col` | `Optional[int]` | non | `None` |
+| `untie_col_id_from_label` | `Optional[bool]` | non | `None` |
+| `description` | `Optional[str]` | non | `None` |
+
+```text
+Modifie les propriétés d'une colonne.
+
+Prérequis:
+    - list_columns: Pour obtenir un column_id valide
+
+Args:
+    doc_id: L'ID du document
+    table_id: L'ID de la table
+    column_id: L'ID actuel de la colonne
+    new_column_id: Nouvel ID pour la colonne (optionnel)
+    column_type: Nouveau type de données (optionnel)
+    label: Nouveau libellé d'affichage (optionnel)
+    formula: Nouvelle formule (optionnel, "" pour supprimer)
+    widget_options: Nouvelles options d'affichage (optionnel)
+    visible_col: Nouveau colRef pour les Ref (optionnel)
+    untie_col_id_from_label: Dissocier l'ID du label (optionnel)
+    description: Nouvelle description (optionnel)
+
+Returns:
+    Dict avec statut et message de l'opération
+```
+
+### delete_column
+
+| Paramètre | Type | Requis | Défaut |
+|---|---|---|---|
+| `doc_id` | `str` | oui |  |
+| `table_id` | `str` | oui |  |
+| `column_id` | `str` | oui |  |
+
+```text
+Supprime une colonne d'une table.
+
+Attention:
+    Cette action est irréversible et supprimera toutes les données
+    associées à cette colonne.
+
+Args:
+    doc_id: L'ID du document
+    table_id: L'ID de la table
+    column_id: L'ID de la colonne à supprimer
+    
+Returns:
+    Dict avec statut et message de l'opération
+```
+
+## Schéma et références
+
+- [`create_reference_column`](#create_reference_column)
+- [`validate_schema`](#validate_schema)
+- [`create_schema`](#create_schema)
+- [`export_schema`](#export_schema)
+
+### create_reference_column
+
+| Paramètre | Type | Requis | Défaut |
+|---|---|---|---|
+| `doc_id` | `str` | oui |  |
+| `table_id` | `str` | oui |  |
+| `column_id` | `str` | oui |  |
+| `target_table` | `str` | oui |  |
+| `visible_column` | `str` | oui |  |
+| `is_list` | `bool` | non | `False` |
+| `label` | `Optional[str]` | non | `None` |
+| `reverse_column` | `Optional[str]` | non | `None` |
+
+```text
+Crée une colonne de référence qui affiche la colonne choisie de la table cible.
+
+Cette fonction:
+1. Vérifie que les tables source et cible existent
+2. Résout le nom (ID ou libellé) de la colonne visible
+3. Crée la colonne de référence et règle son affichage
+4. Optionnellement crée la relation inverse (référence à double sens Grist :
+   les deux colonnes restent synchronisées)
+
+Args:
+    doc_id: L'ID du document
+    table_id: L'ID de la table source
+    column_id: ID de la nouvelle colonne de référence
+    target_table: ID de la table cible
+    visible_column: ID ou libellé de la colonne à afficher (table cible)
+    is_list: Si True, crée RefList au lieu de Ref (défaut: False)
+    label: Libellé d'affichage (optionnel)
+    reverse_column: Si fourni, ID de la colonne inverse (RefList) créée dans target_table
+
+Returns:
+    Dict avec statut, détails et éventuels warnings
+```
+
+### validate_schema
+
+| Paramètre | Type | Requis | Défaut |
+|---|---|---|---|
+| `doc_id` | `str` | oui |  |
+| `schema` | `Dict[str, Any]` | oui |  |
+
+```text
+Valide un schéma sans le créer.
+
+Vérifie:
+- Syntaxe du schéma
+- Existence des tables cibles pour les références
+- Existence des colonnes visibles ('visible') dans les tables cibles
+- Absence de conflit pour les colonnes inverses ('reverse')
+- Colonnes Choice/ChoiceList sans choix (avertissement)
+
+Args:
+    doc_id: L'ID du document (pour vérifier les tables existantes)
+    schema: Schéma à valider (format dict)
+
+Returns:
+    Dict avec statut de validation, erreurs et warnings
+```
+
+### create_schema
+
+| Paramètre | Type | Requis | Défaut |
+|---|---|---|---|
+| `doc_id` | `str` | oui |  |
+| `schema` | `Dict[str, Any]` | oui |  |
+| `skip_existing` | `bool` | non | `True` |
+| `insert_data` | `bool` | non | `True` |
+
+```text
+Crée un schéma complet avec tables, colonnes et relations.
+
+Algorithme:
+1. Validation du schéma (rien n'est créé si elle échoue)
+2. Création des tables avec leurs colonnes simples
+3. Création des colonnes de référence (colonne affichée réglée)
+4. Création des relations inverses (références à double sens)
+5. Insertion des données (optionnel)
+
+Les tables déjà présentes dans le document ne sont jamais modifiées : ni
+colonnes, ni références, ni données ne leur sont ajoutées. Relancer le
+même schéma ne crée donc pas de doublons. Elles restent utilisables comme
+cibles de références.
+
+Args:
+    doc_id: L'ID du document
+    schema: Schéma complet à créer
+    skip_existing: Si True (défaut), ignore les tables existantes. Si False,
+        échoue sans rien créer quand une table existe déjà.
+    insert_data: Si True, insère les données définies (défaut: True)
+
+Returns:
+    Dict avec rapport détaillé de création
+
+Example schema:
+    {
+        "tables": {
+            "Agents": {"columns": {
+                "nom": {"type": "Text", "label": "Nom"},
+                "service": {"type": "Choice", "choices": ["A", "B"]}
+            }},
+            "Taches": {"columns": {
+                "titre": "Text",
+                "responsable": {"type": "Ref", "target": "Agents",
+                                "visible": "nom", "reverse": "taches"}
+            }}
+        },
+        "data": {"Agents": [{"nom": "Dupont", "service": "A"}]}
+    }
+    "Ref:Agents" est accepté comme équivalent de {"type": "Ref", "target": "Agents"}.
+```
+
+### export_schema
+
+| Paramètre | Type | Requis | Défaut |
+|---|---|---|---|
+| `doc_id` | `str` | oui |  |
+| `format` | `str` | non | `'json'` |
+| `include_data` | `bool` | non | `False` |
+
+```text
+Exporte le schéma d'un document existant.
+
+Args:
+    doc_id: L'ID du document
+    format: Format d'export ("json", "yaml", "mermaid")
+    include_data: Si True, inclut les données (limité à 100 enregistrements/table)
+
+Returns:
+    Dict avec le schéma exporté dans le format demandé
+```
+
+## Gestion des accès
+
+- [`list_organization_access`](#list_organization_access)
+- [`modify_organization_access`](#modify_organization_access)
+- [`list_workspace_access`](#list_workspace_access)
+- [`modify_workspace_access`](#modify_workspace_access)
+- [`list_document_access`](#list_document_access)
+- [`modify_document_access`](#modify_document_access)
+
+### list_organization_access
+
+| Paramètre | Type | Requis | Défaut |
+|---|---|---|---|
+| `org_id` | `Union[int, str]` | oui |  |
+
+```text
+Liste les utilisateurs ayant accès à une organisation.
+
+Prérequis:
+    - list_organizations: Pour obtenir un org_id valide
+
+Args:
+    org_id: L'ID de l'organisation
+    
+Returns:
+    Dict avec statut, message et détails des accès
+```
+
+### modify_organization_access
+
+| Paramètre | Type | Requis | Défaut |
+|---|---|---|---|
+| `org_id` | `Union[int, str]` | oui |  |
+| `user_email` | `str` | oui |  |
+| `access_level` | `str` | oui |  |
+
+```text
+Modifie l'accès d'un utilisateur à une organisation.
+
+Prérequis:
+    - list_organizations: Pour obtenir un org_id valide
+    - list_organization_access: Pour voir les accès actuels
+
+Args:
+    org_id: L'ID de l'organisation
+    user_email: Email de l'utilisateur
+    access_level: Niveau d'accès (owners, editors, viewers, members, ou null pour supprimer)
+    
+Returns:
+    Dict avec statut et message de l'opération
+```
+
+### list_workspace_access
+
+| Paramètre | Type | Requis | Défaut |
+|---|---|---|---|
+| `workspace_id` | `int` | oui |  |
+
+```text
+Liste les utilisateurs ayant accès à un espace de travail.
+
+Prérequis:
+    - list_workspaces: Pour obtenir un workspace_id valide
+
+Args:
+    workspace_id: L'ID de l'espace de travail
+    
+Returns:
+    Dict avec statut, message et détails des accès
+```
+
+### modify_workspace_access
+
+| Paramètre | Type | Requis | Défaut |
+|---|---|---|---|
+| `workspace_id` | `int` | oui |  |
+| `user_email` | `str` | oui |  |
+| `access_level` | `str` | oui |  |
+
+```text
+Modifie l'accès d'un utilisateur à un espace de travail.
+
+Prérequis:
+    - list_workspaces: Pour obtenir un workspace_id valide
+    - list_workspace_access: Pour voir les accès actuels
+
+Args:
+    workspace_id: L'ID de l'espace de travail
+    user_email: Email de l'utilisateur
+    access_level: Niveau d'accès (owners, editors, viewers, ou null pour supprimer)
+    
+Returns:
+    Dict avec statut et message de l'opération
+```
+
+### list_document_access
+
+| Paramètre | Type | Requis | Défaut |
+|---|---|---|---|
+| `doc_id` | `str` | oui |  |
+
+```text
+Liste les utilisateurs ayant accès à un document.
+
+Prérequis:
+    - list_documents: Pour obtenir un doc_id valide
+
+Args:
+    doc_id: L'ID du document
+    
+Returns:
+    Dict avec statut, message et détails des accès
+```
+
+### modify_document_access
+
+| Paramètre | Type | Requis | Défaut |
+|---|---|---|---|
+| `doc_id` | `str` | oui |  |
+| `user_email` | `str` | oui |  |
+| `access_level` | `str` | oui |  |
+
+```text
+Modifie l'accès d'un utilisateur à un document.
+
+Prérequis:
+    - list_documents: Pour obtenir un doc_id valide
+    - list_document_access: Pour voir les accès actuels
+
+Args:
+    doc_id: L'ID du document
+    user_email: Email de l'utilisateur
+    access_level: Niveau d'accès (owners, editors, viewers, ou null pour supprimer)
+    
+Returns:
+    Dict avec statut et message de l'opération
+```
+
+## Export et téléchargement
+
+- [`download_document_sqlite`](#download_document_sqlite)
+- [`download_document_excel`](#download_document_excel)
+- [`download_table_csv`](#download_table_csv)
+
+### download_document_sqlite
+
+| Paramètre | Type | Requis | Défaut |
+|---|---|---|---|
+| `doc_id` | `str` | oui |  |
+| `nohistory` | `bool` | non | `False` |
+| `template` | `bool` | non | `False` |
+
+```text
+Télécharge un document Grist au format SQLite.
+
+Prérequis:
+    - list_documents: Pour obtenir un doc_id valide
+
+Args:
+    doc_id: L'ID du document
+    nohistory: Si True, exclut l'historique des modifications
+    template: Si True, télécharge comme modèle (sans données utilisateur)
+    
+Returns:
+    Dict avec statut, message et contenu encodé en base64
+```
+
+### download_document_excel
+
+| Paramètre | Type | Requis | Défaut |
+|---|---|---|---|
+| `doc_id` | `str` | oui |  |
+| `table_id` | `Optional[str]` | non | `None` |
+| `header` | `str` | non | `'label'` |
+
+```text
+Télécharge un document Grist au format Excel.
+
+Prérequis:
+    - list_documents: Pour obtenir un doc_id valide
+
+Args:
+    doc_id: L'ID du document
+    table_id: L'ID de la table à exporter (optionnel, première table par défaut)
+    header: Format des en-têtes (label, id, ou none)
+    
+Returns:
+    Dict avec statut, message et contenu encodé en base64
+```
+
+### download_table_csv
+
+| Paramètre | Type | Requis | Défaut |
+|---|---|---|---|
+| `doc_id` | `str` | oui |  |
+| `table_id` | `str` | oui |  |
+| `header` | `str` | non | `'label'` |
+
+```text
+Télécharge une table Grist au format CSV.
+
+Prérequis:
+    - list_documents: Pour obtenir un doc_id valide
+    - list_tables: Pour obtenir un table_id valide
+
+Args:
+    doc_id: L'ID du document
+    table_id: L'ID de la table
+    header: Format des en-têtes (label, id, ou none)
+
+Returns:
+    Dict avec statut, message et contenu CSV
+```
+
+## Pièces jointes
+
+- [`list_attachments`](#list_attachments)
+- [`get_attachment_info`](#get_attachment_info)
+- [`download_attachment`](#download_attachment)
+- [`upload_attachment`](#upload_attachment)
+
+### list_attachments
+
+| Paramètre | Type | Requis | Défaut |
+|---|---|---|---|
+| `doc_id` | `str` | oui |  |
+| `sort` | `Optional[str]` | non | `None` |
+| `limit` | `Optional[int]` | non | `None` |
+
+```text
+Liste les pièces jointes d'un document Grist.
+
+Prérequis:
+    - list_documents: Pour obtenir un doc_id valide
+
+Args:
+    doc_id: L'ID du document
+    sort: Colonne de tri (optionnel)
+    limit: Nombre maximum de résultats (optionnel)
+    
+Returns:
+    Dict avec statut, message et liste des pièces jointes
+```
+
+### get_attachment_info
+
+| Paramètre | Type | Requis | Défaut |
+|---|---|---|---|
+| `doc_id` | `str` | oui |  |
+| `attachment_id` | `int` | oui |  |
+
+```text
+Obtient les métadonnées d'une pièce jointe.
+
+Prérequis:
+    - list_attachments: Pour obtenir un attachment_id valide
+
+Args:
+    doc_id: L'ID du document
+    attachment_id: L'ID de la pièce jointe
+    
+Returns:
+    Dict avec statut, message et métadonnées de la pièce jointe
+```
+
+### download_attachment
+
+| Paramètre | Type | Requis | Défaut |
+|---|---|---|---|
+| `doc_id` | `str` | oui |  |
+| `attachment_id` | `int` | oui |  |
+
+```text
+Télécharge le contenu d'une pièce jointe.
+
+Prérequis:
+    - list_attachments: Pour obtenir un attachment_id valide
+    - get_attachment_info: Pour obtenir les métadonnées (type, nom)
+
+Args:
+    doc_id: L'ID du document
+    attachment_id: L'ID de la pièce jointe
+    
+Returns:
+    Dict avec statut, message et contenu encodé en base64
+```
+
+### upload_attachment
+
+| Paramètre | Type | Requis | Défaut |
+|---|---|---|---|
+| `doc_id` | `str` | oui |  |
+| `filename` | `str` | oui |  |
+| `content_base64` | `str` | oui |  |
+| `content_type` | `str` | non | `'application/octet-stream'` |
+
+```text
+Téléverse une pièce jointe dans un document Grist.
+
+Prérequis:
+    - list_documents: Pour obtenir un doc_id valide
+
+Args:
+    doc_id: L'ID du document
+    filename: Nom du fichier
+    content_base64: Contenu du fichier encodé en base64
+    content_type: Type MIME du fichier
+    
+Returns:
+    Dict avec statut, message et ID de la pièce jointe créée
 ```
 
 ## Webhooks
 
+- [`list_webhooks`](#list_webhooks)
+- [`create_webhook`](#create_webhook)
+- [`modify_webhook`](#modify_webhook)
+- [`delete_webhook`](#delete_webhook)
+- [`clear_webhook_queue`](#clear_webhook_queue)
+
+### list_webhooks
+
+| Paramètre | Type | Requis | Défaut |
+|---|---|---|---|
+| `doc_id` | `str` | oui |  |
+
+```text
+Liste les webhooks d'un document Grist.
+
+Prérequis:
+    - list_documents: Pour obtenir un doc_id valide
+
+Args:
+    doc_id: L'ID du document
+    
+Returns:
+    Dict avec statut, message et liste des webhooks
+```
+
 ### create_webhook
 
+| Paramètre | Type | Requis | Défaut |
+|---|---|---|---|
+| `doc_id` | `str` | oui |  |
+| `url` | `str` | oui |  |
+| `table_id` | `Optional[str]` | non | `None` |
+| `event_types` | `Optional[List[str]]` | non | `None` |
+| `memo` | `Optional[str]` | non | `None` |
+
+```text
 Crée un webhook pour un document Grist.
 
-```python
-async def create_webhook(
-    doc_id: str,
-    url: str,
-    table_id: Optional[str] = None,
-    event_types: Optional[List[str]] = None,
-    memo: Optional[str] = None,
-    ctx=None
-) -> Dict[str, Any]:
-    """
-    Crée un webhook pour un document Grist.
+Prérequis:
+    - list_documents: Pour obtenir un doc_id valide
+    - list_tables: Pour obtenir un table_id valide (si spécifié)
+
+Args:
+    doc_id: L'ID du document
+    url: URL du webhook (où les notifications seront envoyées)
+    table_id: ID de la table à surveiller (optionnel, tous si non spécifié)
+    event_types: Types d'événements à surveiller (optionnel, tous si non spécifié)
+                Valeurs possibles: ["add", "update", "delete"]
+    memo: Note descriptive pour le webhook (optionnel)
     
-    Args:
-        doc_id: L'ID du document
-        url: URL du webhook (où les notifications seront envoyées)
-        table_id: ID de la table à surveiller (optionnel, tous si non spécifié)
-        event_types: Types d'événements à surveiller (optionnel, tous si non spécifié)
-                    Valeurs possibles: ["add", "update", "delete"]
-        memo: Note descriptive pour le webhook (optionnel)
-        
-    Returns:
-        Dict avec statut, message et ID du webhook créé
-    """
+Returns:
+    Dict avec statut, message et ID du webhook créé
 ```
 
-## Flux de travail typiques
+### modify_webhook
 
-### Navigation dans la hiérarchie Grist
+| Paramètre | Type | Requis | Défaut |
+|---|---|---|---|
+| `doc_id` | `str` | oui |  |
+| `webhook_id` | `str` | oui |  |
+| `url` | `Optional[str]` | non | `None` |
+| `table_id` | `Optional[str]` | non | `None` |
+| `event_types` | `Optional[List[str]]` | non | `None` |
+| `memo` | `Optional[str]` | non | `None` |
+| `active` | `Optional[bool]` | non | `None` |
 
-```python
-# 1. Lister les organisations
-orgs = await list_organizations()
+```text
+Modifie un webhook existant.
 
-# 2. Choisir une organisation et lister ses espaces de travail
-org_id = orgs["organizations"][0]["id"]
-workspaces = await list_workspaces(org_id)
+Prérequis:
+    - list_webhooks: Pour obtenir un webhook_id valide
 
-# 3. Choisir un espace de travail et lister ses documents
-workspace_id = workspaces["workspaces"][0]["id"]
-documents = await list_documents(workspace_id)
-
-# 4. Choisir un document et lister ses tables
-doc_id = documents["documents"][0]["id"]
-tables = await list_tables(doc_id)
-
-# 5. Choisir une table et lister ses colonnes
-table_id = tables["tables"][0]["id"]
-columns = await list_columns(doc_id, table_id)
+Args:
+    doc_id: L'ID du document
+    webhook_id: L'ID du webhook à modifier
+    url: Nouvelle URL du webhook (optionnel)
+    table_id: Nouvel ID de table à surveiller (optionnel)
+    event_types: Nouveaux types d'événements à surveiller (optionnel)
+    memo: Nouvelle note descriptive (optionnel)
+    active: État d'activation du webhook (optionnel)
+    
+Returns:
+    Dict avec statut et message de l'opération
 ```
 
-### Manipulation de données
+### delete_webhook
 
-```python
-# 1. Ajouter des enregistrements
-result = await add_grist_records(
-    doc_id="abcd1234",
-    table_id="Tasks",
-    records=[
-        {"Title": "Nouvelle tâche", "Status": "À faire"},
-        {"Title": "Autre tâche", "Status": "En cours"}
-    ]
-)
+| Paramètre | Type | Requis | Défaut |
+|---|---|---|---|
+| `doc_id` | `str` | oui |  |
+| `webhook_id` | `str` | oui |  |
 
-# 2. Mettre à jour des enregistrements
-update_result = await update_grist_records(
-    doc_id="abcd1234",
-    table_id="Tasks",
-    records=[
-        {"id": 1, "Status": "Terminé"},
-        {"id": 2, "Status": "Terminé"}
-    ]
-)
+```text
+Supprime un webhook.
 
-# 3. Supprimer des enregistrements
-delete_result = await delete_grist_records(
-    doc_id="abcd1234",
-    table_id="Tasks",
-    record_ids=[3, 4]
-)
+Prérequis:
+    - list_webhooks: Pour obtenir un webhook_id valide
+
+Args:
+    doc_id: L'ID du document
+    webhook_id: L'ID du webhook à supprimer
+    
+Returns:
+    Dict avec statut et message de l'opération
+```
+
+### clear_webhook_queue
+
+| Paramètre | Type | Requis | Défaut |
+|---|---|---|---|
+| `doc_id` | `str` | oui |  |
+
+```text
+Vide la file d'attente des webhooks pour un document.
+
+Utile en cas d'accumulation de notifications non envoyées.
+
+Args:
+    doc_id: L'ID du document
+    
+Returns:
+    Dict avec statut et message de l'opération
 ```

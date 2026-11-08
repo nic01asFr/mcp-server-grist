@@ -6,7 +6,6 @@ include requirements.txt
 include pyproject.toml
 recursive-include src *
 recursive-include tests *
-recursive-include npm-wrapper *
 global-exclude __pycache__
 global-exclude *.py[cod]
 global-exclude *.so
