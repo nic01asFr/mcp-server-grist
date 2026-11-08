@@ -7,7 +7,7 @@ name = "mcp-server-grist"
 dynamic = ["version"]
 description = "MCP server for Grist API integration"
 readme = "README.md"
-authors = [{ name = "MCP Contributors", email = "info@example.com" }]
+authors = [{ name = "nic01asFr" }]
 license = "MIT"
 requires-python = ">=3.10"
 dependencies = [

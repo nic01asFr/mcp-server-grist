@@ -14,15 +14,14 @@ Utilisez ce serveur MCP lorsque vous souhaitez :
 - Accéder à des données structurées stockées dans Grist
 - Créer, modifier ou supprimer des enregistrements dans des tables Grist
 - Exécuter des requêtes SQL sur vos données Grist
+- Créer des tables, des colonnes et des schémas complets avec relations
 - Gérer des documents, espaces de travail et organisations Grist
 
 ## Prérequis
 
-Pour utiliser ce serveur MCP, vous aurez besoin de :
-
 - Une clé API Grist valide
 - L'URL de l'API Grist (par défaut : `https://docs.getgrist.com/api`)
-- Python 3.8 ou supérieur
+- Python 3.10 ou supérieur
 
 ## Installation
 
@@ -30,20 +29,20 @@ Pour utiliser ce serveur MCP, vous aurez besoin de :
 pip install mcp-server-grist
 ```
 
+Ou sans installation, avec `uvx mcp-server-grist`.
+
 ## Configuration
 
-### Configuration avec Claude Desktop
+### Avec Claude Desktop
 
-1. Modifiez votre fichier `mcp_servers.json` pour inclure :
+Ajoutez à votre fichier `claude_desktop_config.json` :
 
 ```json
 {
   "mcpServers": {
     "grist-mcp": {
-      "command": "node",
-      "args": [
-        "chemin/vers/npm-wrapper/bin/start.js"
-      ],
+      "command": "uvx",
+      "args": ["mcp-server-grist"],
       "env": {
         "GRIST_API_KEY": "votre_clé_api_grist",
         "GRIST_API_URL": "https://docs.getgrist.com/api"
@@ -53,72 +52,33 @@ pip install mcp-server-grist
 }
 ```
 
-2. Remplacez `chemin/vers/npm-wrapper/bin/start.js` par le chemin absolu vers le script `start.js` du wrapper Node.js inclus dans ce package.
-
-### Configuration manuelle
-
-Vous pouvez également démarrer le serveur manuellement :
+### Démarrage manuel
 
 ```bash
-# Définir les variables d'environnement
 export GRIST_API_KEY="votre_clé_api_grist"
 export GRIST_API_URL="https://docs.getgrist.com/api"
 
-# Démarrer le serveur
+# Mode stdio (clients MCP locaux)
 mcp-server-grist --transport stdio
+
+# Mode HTTP
+mcp-server-grist --transport streamable-http --port 8000
 ```
 
 ## Outils disponibles
 
-Le serveur MCP Grist fournit plus de 50 outils organisés en catégories :
+Le serveur expose 54 outils, regroupés en catégories :
 
-### Navigation (10 outils)
-- `list_organizations` - Liste toutes les organisations accessibles
-- `describe_organization` - Obtient des détails sur une organisation
-- `list_workspaces` - Liste les espaces de travail d'une organisation
-- Et plus...
+- **Navigation** : organisations, espaces de travail, documents, tables, colonnes, enregistrements
+- **Enregistrements** : ajout, modification, suppression
+- **Requêtes SQL** : `filter_sql_query` (filtrage simple) et `execute_sql_query` (SELECT libre)
+- **Administration** : espaces de travail, documents, tables, colonnes
+- **Schéma et relations** : `create_schema`, `validate_schema`, `create_reference_column`, `export_schema`
+- **Gestion des accès**, **export** (SQLite, Excel, CSV), **pièces jointes**, **webhooks**
 
-### Requêtes (2 outils)
-- `execute_sql_query` - Exécute une requête SQL personnalisée
-- `filter_sql_query` - Filtre les données avec une interface simplifiée
-
-### Enregistrements (4 outils)
-- `add_grist_records` - Ajoute des enregistrements à une table
-- `update_grist_records` - Met à jour des enregistrements existants
-- Et plus...
-
-### Administration (16 outils)
-- `create_workspace` - Crée un nouvel espace de travail
-- `modify_document` - Modifie les propriétés d'un document
-- Et plus...
-
-### Gestion des accès (6 outils)
-- `list_organization_access` - Liste les accès à une organisation
-- `modify_document_access` - Modifie les droits d'accès à un document
-- Et plus...
-
-### Export (3 outils)
-- `download_document_sqlite` - Télécharge un document au format SQLite
-- `download_document_excel` - Télécharge un document au format Excel
-- Et plus...
-
-### Pièces jointes (4 outils)
-- `list_attachments` - Liste les pièces jointes d'un document
-- `upload_attachment` - Téléverse une pièce jointe
-- Et plus...
-
-### Webhooks (5 outils)
-- `list_webhooks` - Liste les webhooks d'un document
-- `create_webhook` - Crée un nouveau webhook
-- Et plus...
+Le détail de chaque outil et de ses paramètres se trouve dans la [référence des outils](./tools-reference.mdx).
 
 ## Exemples d'utilisation
-
-### Lister les organisations
-
-```python
-await list_organizations()
-```
 
 ### Exécuter une requête SQL
 
@@ -143,14 +103,29 @@ await add_grist_records(
 )
 ```
 
+### Créer deux tables reliées
+
+```python
+await create_schema(
+    doc_id="abcd1234",
+    schema={
+        "tables": {
+            "Projets": {"columns": {"nom": "Text"}},
+            "Taches": {"columns": {
+                "titre": "Text",
+                "projet": {"type": "Ref", "target": "Projets", "visible": "nom", "reverse": "taches"}
+            }}
+        }
+    }
+)
+```
+
 ## Dépannage
 
-Si vous rencontrez des problèmes :
-
 1. Vérifiez que votre clé API Grist est valide
-2. Assurez-vous que l'URL de l'API est correcte
-3. Consultez les logs du serveur pour plus de détails
+2. Assurez-vous que l'URL de l'API est correcte (`GRIST_API_URL`)
+3. Consultez les logs du serveur (option `--debug` pour plus de détails)
 
 ## Contribuer
 
-Les contributions sont les bienvenues ! Consultez notre [guide de contribution](https://github.com/modelcontextprotocol/mcp-server-grist/blob/main/CONTRIBUTING.md) pour plus d'informations.
+Les contributions sont les bienvenues : consultez le [guide de contribution](https://github.com/nic01asFr/mcp-server-grist/blob/official/CONTRIBUTING.md).

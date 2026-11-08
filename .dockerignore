@@ -11,6 +11,5 @@ build
 dist
 tests
 docs
-npm-wrapper
 *.tar
 *.tar.gz

@@ -20,10 +20,14 @@ mcp-server-grist/
 │       ├── main.py           # Point d'entrée principal
 │       ├── server.py         # Configuration du serveur MCP
 │       ├── client.py         # Client API Grist
-│       ├── tools/            # Outils MCP organisés par catégorie
-│       └── models.py         # Modèles de données Pydantic
-├── tests/                    # Tests unitaires et d'intégration
-├── docs/                     # Documentation détaillée
+│       ├── models.py         # Modèles de données Pydantic
+│       ├── types.py          # Définitions de schéma (create_schema)
+│       └── tools/            # Outils MCP par catégorie (navigation, records,
+│                             # queries, administration, schema, access,
+│                             # export, attachments, webhooks, utils)
+├── tests/                    # Tests automatisés (pytest)
+├── docs/                     # Documentation (référence des outils générée)
+├── scripts/                  # Génération de docs/tools-reference.mdx
 ├── requirements.txt          # Dépendances Python
 ├── pyproject.toml           # Configuration moderne du package
 ├── Dockerfile               # Configuration Docker
@@ -34,9 +38,9 @@ mcp-server-grist/
 
 ## Prérequis
 
-- Python 3.8+
+- Python 3.10+
 - Une clé API Grist valide
-- Les packages Python suivants : `fastmcp`, `httpx`, `pydantic`, `python-dotenv`
+- Les packages Python suivants (installés automatiquement) : `fastmcp`, `httpx`, `pydantic`, `python-dotenv`
 
 ## Utilisation à la volée
 
@@ -86,16 +90,13 @@ mcp-server-grist
 
 ### Utilisation avec Claude Desktop
 
-Pour utiliser ce serveur MCP avec Claude Desktop, ajoutez la configuration suivante à votre fichier `mcp_servers.json` :
+Pour utiliser ce serveur MCP avec Claude Desktop, ajoutez la configuration suivante à votre fichier `claude_desktop_config.json` (après `pip install mcp-server-grist`) :
 
 ```json
 {
   "mcpServers": {
     "grist-mcp": {
-      "command": "node",
-      "args": [
-        "chemin/vers/npm-wrapper/bin/start.js"
-      ],
+      "command": "mcp-server-grist",
       "env": {
         "GRIST_API_KEY": "votre_clé_api_grist",
         "GRIST_API_URL": "https://docs.getgrist.com/api"
@@ -105,7 +106,7 @@ Pour utiliser ce serveur MCP avec Claude Desktop, ajoutez la configuration suiva
 }
 ```
 
-Remplacez `chemin/vers/npm-wrapper/bin/start.js` par le chemin absolu vers le script `start.js` du wrapper Node.js inclus dans ce package.
+Sans installation préalable, utilisez la configuration `uvx` ci-dessus.
 
 ### Installation en mode développement
 
@@ -251,75 +252,66 @@ Options:
 
 Pour les transports HTTP, nous recommandons :
 
-- Utiliser `127.0.0.1` (localhost) plutôt que `0.0.0.0` pour limiter l'accès au réseau local
-- Activer la validation d'origine (`validate_origin`) pour éviter les attaques DNS rebinding
-- Pour une exposition à Internet, utiliser un proxy inverse avec HTTPS
+- Utiliser `127.0.0.1` (localhost, valeur par défaut) plutôt que `0.0.0.0` pour limiter l'accès au réseau local
+- Le serveur n'authentifie pas ses clients HTTP : quiconque l'atteint agit avec votre clé Grist
+- Pour une exposition à Internet, utiliser un proxy inverse avec HTTPS et authentification
 
 ## Fonctionnalités
 
 - Accès aux données Grist directement depuis les modèles de langage
 - Liste des organisations, espaces de travail, documents, tables et colonnes
 - Gestion des enregistrements (création, lecture, mise à jour, suppression)
-- Filtrage et tri des données avec des capacités de requêtage avancées
-- Support des requêtes SQL (SELECT uniquement)
-- Authentification sécurisée via clé API
+- Filtrage et tri des données, requêtes SQL (SELECT uniquement)
+- Création de tables, de colonnes et de schémas complets avec relations entre tables
+- Authentification via clé API
 - Gestion des accès utilisateurs
 - Export et téléchargement (SQLite, Excel, CSV)
 - Gestion des pièces jointes
 - Gestion des webhooks
-- Validation intelligente des formules
 
 ## Outils disponibles
 
-### Gestion des organisations et documents
+Le serveur expose 54 outils. La [référence complète](https://github.com/nic01asFr/mcp-server-grist/blob/official/docs/tools-reference.mdx) détaille les paramètres de chacun.
+
+### Navigation
 - `list_organizations` : Liste les organisations
 - `describe_organization` : Obtient des informations détaillées sur une organisation
-- `modify_organization` : Modifie une organisation
-- `delete_organization` : Supprime une organisation
-- `list_workspaces` : Liste les espaces de travail dans une organisation
+- `list_workspaces` : Liste les espaces de travail d'une organisation
 - `describe_workspace` : Obtient des informations détaillées sur un espace de travail
-- `create_workspace` : Crée un nouvel espace de travail
-- `modify_workspace` : Modifie un espace de travail
-- `delete_workspace` : Supprime un espace de travail
-- `list_documents` : Liste les documents dans un espace de travail
+- `list_documents` : Liste les documents d'un espace de travail
 - `describe_document` : Obtient des informations détaillées sur un document
-- `create_document` : Crée un nouveau document
-- `modify_document` : Modifie un document
-- `delete_document` : Supprime un document
-- `move_document` : Déplace un document vers un autre espace de travail
-- `force_reload_document` : Force le rechargement d'un document
-- `delete_document_history` : Supprime l'historique d'un document
-
-### Gestion des tables et colonnes
-- `list_tables` : Liste les tables dans un document
-- `create_table` : Crée une nouvelle table
-- `modify_table` : Modifie une table
-- `list_columns` : Liste les colonnes dans une table
-- `create_column` : Crée une nouvelle colonne
-- `create_column_with_feedback` : Crée une colonne avec validation et retour détaillé
-- `modify_column` : Modifie une colonne
-- `delete_column` : Supprime une colonne
-- `create_column_with_formula_safe` : Crée une colonne de formule avec validation
-- `get_formula_helpers` : Obtient de l'aide pour construire des formules
-- `validate_formula` : Valide une formule et suggère des corrections
-- `get_table_schema` : Obtient le schéma d'une table
+- `list_tables` : Liste les tables d'un document
+- `list_columns` : Liste les colonnes d'une table
+- `list_records` : Liste les enregistrements avec tri et limite
+- `get_table_schema` : Obtient le schéma détaillé d'une table
 
 ### Manipulation des données
-- `list_records` : Liste les enregistrements avec tri et limite
 - `add_grist_records` : Ajoute des enregistrements
-- `add_grist_records_safe` : Ajoute des enregistrements avec validation
+- `add_grist_records_safe` : Ajoute des enregistrements après vérification des colonnes
 - `update_grist_records` : Met à jour des enregistrements
 - `delete_grist_records` : Supprime des enregistrements
 
 ### Filtrage et requêtes SQL
-- `filter_sql_query` : Requête SQL optimisée pour le filtrage simple
-  * Interface simplifiée pour les filtres courants
-  * Support du tri et de la limitation
-  * Conditions WHERE basiques
-- `execute_sql_query` : Requête SQL complexe
-  * Requêtes SQL personnalisées
-  * Support des JOIN et sous-requêtes
-  * Paramètres et timeout configurables
+- `filter_sql_query` : Filtrage simple sans écrire de SQL
+  * Conditions WHERE, tri et limite
+- `execute_sql_query` : Requête SQL personnalisée (SELECT uniquement)
+  * Jointures, sous-requêtes, paramètres et timeout
+
+### Administration
+- `modify_organization`, `delete_organization` : Gèrent une organisation
+- `create_workspace`, `modify_workspace`, `delete_workspace` : Gèrent les espaces de travail
+- `create_document`, `modify_document`, `delete_document` : Gèrent les documents
+- `move_document` : Déplace un document vers un autre espace de travail
+- `force_reload_document` : Force le rechargement d'un document
+- `delete_document_history` : Supprime l'historique d'un document
+- `create_table`, `modify_table` : Créent ou renomment une table
+- `create_column`, `modify_column`, `delete_column` : Gèrent les colonnes (types, formules, choix, références)
+
+### Schéma et relations
+- `create_schema` : Crée en une fois des tables, leurs colonnes, leurs relations et des données initiales
+- `validate_schema` : Vérifie un schéma sans rien créer
+- `create_reference_column` : Crée une colonne référence qui affiche la colonne choisie, avec relation inverse optionnelle
+- `export_schema` : Exporte le schéma d'un document (JSON, YAML ou diagramme Mermaid)
 
 ### Gestion des accès
 - `list_organization_access` : Liste les utilisateurs ayant accès à une organisation
@@ -331,11 +323,11 @@ Pour les transports HTTP, nous recommandons :
 
 ### Export et téléchargement
 - `download_document_sqlite` : Télécharge un document au format SQLite
-- `download_document_excel` : Télécharge un document au format Excel
+- `download_document_excel` : Télécharge une table au format Excel
 - `download_table_csv` : Télécharge une table au format CSV
 
 ### Gestion des pièces jointes
-- `list_attachments` : Liste les pièces jointes dans un document
+- `list_attachments` : Liste les pièces jointes d'un document
 - `get_attachment_info` : Obtient des informations sur une pièce jointe
 - `download_attachment` : Télécharge une pièce jointe
 - `upload_attachment` : Téléverse une pièce jointe
@@ -415,19 +407,36 @@ updated_records = await update_grist_records(
     records=[{"id": 1, "name": "John", "age": 31}]
 )
 
-# Création d'une colonne de formule avec validation
-formula_column = await create_column_with_formula_safe(
+# Création d'une colonne calculée
+formula_column = await create_column(
     doc_id="abc123",
     table_id="Table1",
-    column_label="Total",
-    formula="$Prix * $Quantité",
-    column_type="Numeric"
+    column_id="total",
+    column_type="Numeric",
+    label="Total",
+    formula="$prix * $quantite"
 )
 
-# Téléchargement d'un document au format Excel
+# Création d'un schéma complet avec une relation entre tables
+schema = await create_schema(
+    doc_id="abc123",
+    schema={
+        "tables": {
+            "Clients": {"columns": {"nom": {"type": "Text", "label": "Nom"}}},
+            "Commandes": {"columns": {
+                "numero": "Text",
+                "client": {"type": "Ref", "target": "Clients",
+                           "visible": "nom", "reverse": "commandes"}
+            }}
+        }
+    }
+)
+
+# Téléchargement d'une table au format Excel
 excel_doc = await download_document_excel(
     doc_id="abc123",
-    header_format="label"
+    table_id="Table1",
+    header="label"
 )
 
 # Gestion des accès
@@ -456,10 +465,10 @@ await modify_document_access(
 - `update_grist_records` : Pour modifier des enregistrements existants
 - `delete_grist_records` : Pour supprimer des enregistrements
 
-### Travail avec les formules
-- `get_formula_helpers` : Pour obtenir la syntaxe correcte des références de colonnes
-- `validate_formula` : Pour vérifier et corriger automatiquement les formules
-- `create_column_with_formula_safe` : Pour créer des colonnes calculées sécurisées
+### Structure et formules
+- `get_table_schema` et `list_columns` : Pour connaître les IDs de colonnes à utiliser dans les formules (`$id_colonne`)
+- `create_column` (paramètre `formula`) : Pour créer des colonnes calculées
+- `create_schema` et `validate_schema` : Pour créer une base complète, relations comprises, en une fois
 
 ### Export et téléchargement
 - `download_document_sqlite`, `download_document_excel`, `download_table_csv` : Pour exporter les données

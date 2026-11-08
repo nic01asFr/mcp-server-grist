@@ -64,8 +64,38 @@ clés (`warnings`, `columns`, `reverse_column.two_way`).
 - `GristClient.apply_user_actions(doc_id, actions)` : appel de `POST /docs/{doc}/apply`.
 - Tests `tests/test_schema_tools.py`.
 - Dépendances de test : `pip install -e ".[dev]"`.
+- `docs/tools-reference.mdx` : référence complète des 54 outils, générée depuis le code
+  (`scripts/generate_tools_reference.py`) ; un test vérifie qu'elle reste à jour, et que
+  le README ne cite que des outils et des paramètres existants.
 
-## [0.2.0] - 2024-12-30
+### Documentation
+
+- README (page PyPI) : liste des outils alignée sur les 54 outils réels (ajout des outils
+  de schéma, retrait de 5 outils inexistants), exemples corrigés, Python 3.10+,
+  configuration Claude Desktop sans le wrapper Node.js.
+- `docs/index.mdx` réécrit (liens vers ce dépôt, Python 3.10+).
+- Auteur du paquet : `nic01asFr`.
+
+### Supprimé
+
+- `npm-wrapper/` : jamais publié sur npm, son nom (`@modelcontextprotocol/server-grist`)
+  n'était pas disponible. Les modes `uvx`, `pip` et Docker le remplacent.
+- `docker-compose.yml` : clé `version` obsolète, réseau inutilisé, `tty` (gênant en stdio).
+
+## [0.2.1] - 2026-02-21
+
+### Modifié
+
+- Python 3.10 minimum (`requires-python = ">=3.10"`).
+- README : utilisation à la volée avec `uvx`, URL du dépôt.
+- `docker-compose.yml` : retrait du service SSE.
+
+## [0.2.0] - 2025-12-30
+
+### Corrigé
+
+- Le paramètre `ctx` n'est plus exposé aux clients MCP : il n'est plus nécessaire de
+  passer `ctx=null` à chaque appel d'outil.
 
 ### Ajouté
 
@@ -137,6 +167,9 @@ clés (`warnings`, `columns`, `reverse_column.two_way`).
   - `untie_col_id_from_label: bool`
   - `description: str`
 
+Note : dans cette version, `visible_col`, `untie_col_id_from_label` et `description`
+étaient transmis à Grist mais sans effet réel ; ils ne fonctionnent que depuis la 0.2.2.
+
 ### Structure du projet
 
 ```
@@ -147,7 +180,7 @@ src/mcp_server_grist/
 │   ├── utils.py          # NOUVEAU: Utilitaires
 │   ├── administration.py # MODIFIÉ: Corrections
 │   ├── schema.py         # NOUVEAU: Outils schéma
-│   └── downloads.py      # MODIFIÉ: Corrections
+│   └── export.py         # MODIFIÉ: Corrections
 └── ...
 ```
 

@@ -14,6 +14,8 @@ le client Grist est simulé.
 - `test_transport.py` : point d'entrée et transports (stdio, streamable-http, sse)
 - `test_security.py` : masquage de la clé API, protection contre l'injection SQL
 - `test_compliance.py` : conformité au protocole MCP
+- `test_docs.py` : la documentation correspond aux outils réels (référence générée à
+  jour, README sans outil ni paramètre inexistant)
 
 ## Exécution
 
