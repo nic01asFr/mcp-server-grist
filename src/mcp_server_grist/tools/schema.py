@@ -1,11 +1,16 @@
 """
 Outils de gestion de schéma Grist.
 
-Nouveaux outils v0.2.0:
+Outils:
 - create_reference_column: Création de références avec résolution automatique
 - validate_schema: Validation d'un schéma sans création
 - create_schema: Création complète d'un schéma avec relations
 - export_schema: Export du schéma d'un document existant
+
+v0.2.2 : colonne affichée réellement appliquée (formule d'affichage),
+relations inverses à double sens natives, untieColIdFromLabel et description
+appliqués après création, notation 'Ref:Table' acceptée, relance de
+create_schema sans doublons.
 """
 import json
 import logging
@@ -22,12 +27,15 @@ from ..types import (
     parse_schema_dict,
 )
 from .utils import (
-    resolve_visible_col,
-    check_table_exists,
-    prepare_column_payload,
-    prepare_table_payload,
-    build_success_response,
+    add_reverse_reference,
     build_error_response,
+    build_success_response,
+    check_table_exists,
+    column_ref_index,
+    create_table_with_columns,
+    finalize_columns,
+    prepare_column_payload,
+    resolve_visible_col,
 )
 
 # Configurer le logger
@@ -43,7 +51,7 @@ class SchemaCreationReport:
     records_inserted: List[Dict[str, Any]] = field(default_factory=list)
     warnings: List[str] = field(default_factory=list)
     errors: List[str] = field(default_factory=list)
-    
+
     def to_dict(self) -> Dict[str, Any]:
         return {
             "tables_created": self.tables_created,
@@ -53,6 +61,44 @@ class SchemaCreationReport:
             "warnings": self.warnings,
             "errors": self.errors,
         }
+
+
+async def _create_reference(
+    client,
+    doc_id: str,
+    table_id: str,
+    column_id: str,
+    ref_type: str,
+    label: Optional[str] = None,
+    visible_col: Optional[int] = None,
+    description: Optional[str] = None,
+) -> Tuple[str, List[str]]:
+    """
+    Crée une colonne référence puis applique la colonne affichée, la
+    description et untieColIdFromLabel (ignorés par Grist à la création).
+
+    Returns:
+        (ID réel de la colonne, avertissements)
+    """
+    payload = prepare_column_payload(
+        column_id=column_id,
+        column_type=ref_type,
+        label=label,
+        visible_col=visible_col,
+    )
+    created = await client.create_columns(doc_id, table_id, payload)
+    actual = created[0].get("id", column_id) if created else column_id
+    warnings: List[str] = []
+    if actual != column_id:
+        warnings.append(f"L'ID de colonne '{column_id}' a été modifié en '{actual}' par Grist")
+
+    values: Dict[str, Any] = {"untieColIdFromLabel": True}
+    if description:
+        values["description"] = description
+    if visible_col is not None:
+        values["visibleCol"] = visible_col
+    warnings.extend(await finalize_columns(client, doc_id, table_id, {actual: values}))
+    return actual, warnings
 
 
 async def create_reference_column(
@@ -67,24 +113,25 @@ async def create_reference_column(
     ctx: Context = None
 ) -> Dict[str, Any]:
     """
-    Crée une colonne de référence avec résolution automatique de visibleCol.
-    
+    Crée une colonne de référence qui affiche la colonne choisie de la table cible.
+
     Cette fonction:
-    1. Vérifie que la table cible existe
-    2. Résout le nom de colonne visible en colRef numérique
-    3. Crée la colonne de référence
-    4. Optionnellement crée la relation inverse
-    
+    1. Vérifie que les tables source et cible existent
+    2. Résout le nom (ID ou libellé) de la colonne visible
+    3. Crée la colonne de référence et règle son affichage
+    4. Optionnellement crée la relation inverse (référence à double sens Grist :
+       les deux colonnes restent synchronisées)
+
     Args:
         doc_id: L'ID du document
         table_id: L'ID de la table source
         column_id: ID de la nouvelle colonne de référence
         target_table: ID de la table cible
-        visible_column: Nom de la colonne à afficher (sera résolu en colRef)
+        visible_column: ID ou libellé de la colonne à afficher (table cible)
         is_list: Si True, crée RefList au lieu de Ref (défaut: False)
         label: Libellé d'affichage (optionnel)
-        reverse_column: Si fourni, crée une RefList inverse dans target_table
-    
+        reverse_column: Si fourni, ID de la colonne inverse (RefList) créée dans target_table
+
     Returns:
         Dict avec statut, détails et éventuels warnings
     """
@@ -92,69 +139,56 @@ async def create_reference_column(
         client = get_client(ctx)
         if not client:
             return build_error_response("Client Grist non configuré")
-        warnings = []
-        
-        # PHASE 1: Validation - Vérifier que target_table existe
+
+        # PHASE 1: Validation - tables source et cible
         exists, available_tables = await check_table_exists(client, doc_id, target_table)
         if not exists:
             return build_error_response(
                 f"Table cible '{target_table}' inexistante",
                 details={"available_tables": available_tables}
             )
-        
-        # PHASE 2: Résolution - Trouver le colRef de visible_column
+        if table_id not in available_tables:
+            return build_error_response(
+                f"Table source '{table_id}' inexistante",
+                details={"available_tables": available_tables}
+            )
+
+        # PHASE 2: Résolution - colRef de visible_column
         col_ref, error = await resolve_visible_col(
             client, doc_id, target_table, visible_column
         )
         if error:
             return build_error_response(error)
-        
-        # PHASE 3: Création de la colonne
+
+        # PHASE 3: Création de la colonne et de son affichage
         ref_type = f"RefList:{target_table}" if is_list else f"Ref:{target_table}"
-        
-        payload = prepare_column_payload(
-            column_id=column_id,
-            column_type=ref_type,
-            label=label,
-            visible_col=col_ref
+        actual_id, warnings = await _create_reference(
+            client, doc_id, table_id, column_id, ref_type,
+            label=label, visible_col=col_ref,
         )
-        
-        # Utiliser la méthode create_columns du client
-        columns_created = await client.create_columns(doc_id, table_id, payload)
-        
-        # PHASE 4: Création de la relation inverse (optionnel)
+
+        # PHASE 4: Relation inverse (optionnel)
         reverse_result = None
         if reverse_column:
             try:
-                # Résoudre le colRef pour la table source
-                source_col_ref, _ = await resolve_visible_col(
-                    client, doc_id, table_id, column_id
+                reverse = await add_reverse_reference(
+                    client, doc_id, table_id, actual_id, reverse_column
                 )
-                # En cas d'échec, utiliser "id" par défaut
-                if source_col_ref is None:
-                    source_col_ref, _ = await resolve_visible_col(
-                        client, doc_id, table_id, "id"
-                    )
-                
-                reverse_payload = prepare_column_payload(
-                    column_id=reverse_column,
-                    column_type=f"RefList:{table_id}",
-                    label=f"{table_id}s",
-                    visible_col=source_col_ref
-                )
-                
-                reverse_columns = await client.create_columns(doc_id, target_table, reverse_payload)
-                reverse_result = reverse_columns[0] if reverse_columns else {"id": reverse_column}
-                
+                warnings.extend(reverse["warnings"])
+                reverse_result = {
+                    "id": reverse["column"],
+                    "table": reverse["table"],
+                    "two_way": reverse["two_way"],
+                }
             except Exception as e:
                 warnings.append(
                     f"Échec création relation inverse '{reverse_column}': {str(e)}"
                 )
-        
+
         # PHASE 5: Réponse
         result = build_success_response(
-            f"Colonne référence '{column_id}' créée avec succès",
-            column=columns_created[0] if columns_created else {"id": column_id},
+            f"Colonne référence '{actual_id}' créée avec succès",
+            column={"id": actual_id},
             reference={
                 "from_table": table_id,
                 "to_table": target_table,
@@ -163,19 +197,110 @@ async def create_reference_column(
                 "visible_col_ref": col_ref
             }
         )
-        
+
         if reverse_result:
             result["reverse_column"] = reverse_result
-        
+
         if warnings:
             result["warnings"] = warnings
-        
+
         return result
-        
+
     except Exception as e:
         return build_error_response(
             f"Erreur lors de la création de la colonne référence: {str(e)}"
         )
+
+
+async def _existing_columns(client, doc_id: str, table_id: str, cache: Dict[str, Dict[str, int]]):
+    """Index nom -> colRef d'une table existante (avec cache)."""
+    if table_id not in cache:
+        cache[table_id] = column_ref_index(await client.list_columns(doc_id, table_id))
+    return cache[table_id]
+
+
+def _schema_column_names(table: TableDefinition) -> set:
+    """IDs et libellés des colonnes d'une table du schéma."""
+    names = set()
+    for col in table.columns:
+        names.add(col.id)
+        if col.label:
+            names.add(col.label)
+    return names
+
+
+async def _validate(client, doc_id: str, schema: Dict[str, Any], cache: Dict[str, Dict[str, int]]):
+    """
+    Valide le schéma. Returns: (schema_def, existing_tables, errors, warnings).
+    Lève ValueError si le schéma ne peut pas être lu.
+    """
+    errors: List[str] = []
+    warnings: List[str] = []
+
+    schema_def = parse_schema_dict(schema)
+    existing_tables = {t.id for t in await client.list_tables(doc_id)}
+    schema_tables = {t.id: t for t in schema_def.tables}
+    all_tables = existing_tables | set(schema_tables)
+
+    for table in schema_def.tables:
+        if table.id in existing_tables:
+            # Table existante : elle ne sera pas modifiée, ses colonnes
+            # ne sont donc pas vérifiées.
+            warnings.append(f"Table '{table.id}' existe déjà dans le document")
+            continue
+
+        for col in table.columns:
+            if col.type in ("Choice", "ChoiceList") and not col.choices:
+                warnings.append(
+                    f"Table '{table.id}', colonne '{col.id}': "
+                    f"type {col.type} sans 'choices' défini"
+                )
+            if col.type not in ("Ref", "RefList"):
+                continue
+
+            where = f"Table '{table.id}', colonne '{col.id}'"
+            if not col.target_table:
+                errors.append(f"{where}: target_table requis pour type {col.type}")
+                continue
+            if col.target_table not in all_tables:
+                errors.append(f"{where}: table cible '{col.target_table}' inexistante")
+                continue
+
+            # Colonnes connues de la table cible (existante dans le document,
+            # sinon telle que définie dans le schéma).
+            target_names = None
+            if col.target_table in existing_tables:
+                try:
+                    target_names = set(await _existing_columns(client, doc_id, col.target_table, cache))
+                except Exception as e:
+                    warnings.append(f"{where}: colonnes de '{col.target_table}' non vérifiées ({e})")
+            else:
+                target_names = _schema_column_names(schema_tables[col.target_table])
+
+            if not col.visible_column:
+                warnings.append(
+                    f"{where}: pas de colonne visible ('visible'), "
+                    f"la référence affichera l'identifiant de ligne"
+                )
+            elif target_names is not None and col.visible_column not in target_names:
+                errors.append(
+                    f"{where}: colonne visible '{col.visible_column}' inexistante "
+                    f"dans '{col.target_table}' (disponibles: {sorted(target_names)})"
+                )
+
+            if col.reverse_column and target_names is not None and col.reverse_column in target_names:
+                errors.append(
+                    f"{where}: la colonne inverse '{col.reverse_column}' existe déjà "
+                    f"dans '{col.target_table}'"
+                )
+
+    for data_table in (schema_def.data or {}):
+        if data_table not in schema_tables:
+            warnings.append(
+                f"Données pour '{data_table}' ignorées : table absente du schéma"
+            )
+
+    return schema_def, existing_tables, errors, warnings
 
 
 async def validate_schema(
@@ -185,76 +310,33 @@ async def validate_schema(
 ) -> Dict[str, Any]:
     """
     Valide un schéma sans le créer.
-    
+
     Vérifie:
     - Syntaxe du schéma
     - Existence des tables cibles pour les références
-    - Cohérence des types de colonnes
-    - Colonnes visibles existantes pour les références
-    
+    - Existence des colonnes visibles ('visible') dans les tables cibles
+    - Absence de conflit pour les colonnes inverses ('reverse')
+    - Colonnes Choice/ChoiceList sans choix (avertissement)
+
     Args:
         doc_id: L'ID du document (pour vérifier les tables existantes)
         schema: Schéma à valider (format dict)
-    
+
     Returns:
         Dict avec statut de validation, erreurs et warnings
     """
     try:
-        errors = []
-        warnings = []
-        
-        # Parser le schéma
-        try:
-            schema_def = parse_schema_dict(schema)
-        except Exception as e:
-            return build_error_response(
-                f"Erreur de parsing du schéma: {str(e)}"
-            )
-        
-        # Récupérer les tables existantes
         client = get_client(ctx)
         if not client:
             return build_error_response("Client Grist non configuré")
-        
-        # Utiliser list_tables du client
-        tables_list = await client.list_tables(doc_id)
-        existing_tables = {t.id for t in tables_list}
-        
-        # Tables définies dans le schéma
-        schema_tables = {t.id for t in schema_def.tables}
-        all_tables = existing_tables | schema_tables
-        
-        # Valider chaque table
-        for table in schema_def.tables:
-            # Vérifier si la table existe déjà
-            if table.id in existing_tables:
-                warnings.append(f"Table '{table.id}' existe déjà dans le document")
-            
-            # Valider les colonnes
-            for col in table.columns:
-                # Vérifier les références
-                if col.type in ("Ref", "RefList"):
-                    if not col.target_table:
-                        errors.append(
-                            f"Table '{table.id}', colonne '{col.id}': "
-                            f"target_table requis pour type {col.type}"
-                        )
-                    elif col.target_table not in all_tables:
-                        errors.append(
-                            f"Table '{table.id}', colonne '{col.id}': "
-                            f"table cible '{col.target_table}' inexistante"
-                        )
-                
-                # Vérifier les choix
-                if col.type in ("Choice", "ChoiceList") and not col.choices:
-                    warnings.append(
-                        f"Table '{table.id}', colonne '{col.id}': "
-                        f"type {col.type} sans 'choices' défini"
-                    )
-        
-        # Résultat
+
+        try:
+            schema_def, _, errors, warnings = await _validate(client, doc_id, schema, {})
+        except (ValueError, AttributeError, TypeError) as e:
+            return build_error_response(f"Erreur de parsing du schéma: {str(e)}")
+
         is_valid = len(errors) == 0
-        
+
         return {
             "success": True,
             "valid": is_valid,
@@ -273,11 +355,28 @@ async def validate_schema(
             "errors": errors,
             "warnings": warnings
         }
-        
+
     except Exception as e:
         return build_error_response(
             f"Erreur lors de la validation du schéma: {str(e)}"
         )
+
+
+def _simple_column_dict(col: ColumnDefinition) -> Dict[str, Any]:
+    """Définition de colonne simple au format attendu par create_table_with_columns."""
+    col_def: Dict[str, Any] = {"id": col.id, "type": col.type}
+    if col.label:
+        col_def["label"] = col.label
+    if col.formula:
+        col_def["formula"] = col.formula
+        col_def["isFormula"] = True
+    if col.description:
+        col_def["description"] = col.description
+    if col.widget_options:
+        col_def["widgetOptions"] = col.widget_options
+    if col.choices:
+        col_def["choices"] = col.choices
+    return col_def
 
 
 async def create_schema(
@@ -289,214 +388,195 @@ async def create_schema(
 ) -> Dict[str, Any]:
     """
     Crée un schéma complet avec tables, colonnes et relations.
-    
+
     Algorithme:
-    1. Validation du schéma
-    2. Création des tables avec colonnes simples
-    3. Résolution des visibleCol pour les références
-    4. Création des colonnes de référence
+    1. Validation du schéma (rien n'est créé si elle échoue)
+    2. Création des tables avec leurs colonnes simples
+    3. Création des colonnes de référence (colonne affichée réglée)
+    4. Création des relations inverses (références à double sens)
     5. Insertion des données (optionnel)
-    
+
+    Les tables déjà présentes dans le document ne sont jamais modifiées : ni
+    colonnes, ni références, ni données ne leur sont ajoutées. Relancer le
+    même schéma ne crée donc pas de doublons. Elles restent utilisables comme
+    cibles de références.
+
     Args:
         doc_id: L'ID du document
         schema: Schéma complet à créer
-        skip_existing: Si True, ignore les tables existantes (défaut: True)
+        skip_existing: Si True (défaut), ignore les tables existantes. Si False,
+            échoue sans rien créer quand une table existe déjà.
         insert_data: Si True, insère les données définies (défaut: True)
-    
+
     Returns:
         Dict avec rapport détaillé de création
+
+    Example schema:
+        {
+            "tables": {
+                "Agents": {"columns": {
+                    "nom": {"type": "Text", "label": "Nom"},
+                    "service": {"type": "Choice", "choices": ["A", "B"]}
+                }},
+                "Taches": {"columns": {
+                    "titre": "Text",
+                    "responsable": {"type": "Ref", "target": "Agents",
+                                    "visible": "nom", "reverse": "taches"}
+                }}
+            },
+            "data": {"Agents": [{"nom": "Dupont", "service": "A"}]}
+        }
+        "Ref:Agents" est accepté comme équivalent de {"type": "Ref", "target": "Agents"}.
     """
     report = SchemaCreationReport()
-    
+
     try:
         client = get_client(ctx)
         if not client:
             return build_error_response("Client Grist non configuré")
-        
+
         # PHASE 1: Validation
-        validation = await validate_schema(doc_id, schema, ctx)
-        if not validation.get("valid", False):
+        col_cache: Dict[str, Dict[str, int]] = {}
+        try:
+            schema_def, existing_tables, errors, warnings = await _validate(
+                client, doc_id, schema, col_cache
+            )
+        except (ValueError, AttributeError, TypeError) as e:
+            return build_error_response(f"Erreur de parsing du schéma: {str(e)}")
+        if errors:
             return build_error_response(
                 "Schéma invalide",
-                details={
-                    "errors": validation.get("errors", []),
-                    "warnings": validation.get("warnings", [])
-                }
+                details={"errors": errors, "warnings": warnings}
             )
-        
-        report.warnings.extend(validation.get("warnings", []))
-        
-        # Parser le schéma
-        schema_def = parse_schema_dict(schema)
-        
-        # Récupérer les tables existantes
-        tables_list = await client.list_tables(doc_id)
-        existing_tables = {t.id for t in tables_list}
-        
+        already = [t.id for t in schema_def.tables if t.id in existing_tables]
+        if already and not skip_existing:
+            return build_error_response(
+                "Tables déjà présentes (skip_existing=False) : rien n'a été créé",
+                details={"existing_tables": already}
+            )
+        report.warnings.extend(warnings)
+
         # Mapping table_id schéma → table_id réel (au cas où Grist renomme)
-        table_mapping = {}
-        
+        table_mapping = {t: t for t in existing_tables}
+        column_mapping: Dict[str, Dict[str, str]] = {}
+        created: set = set()
+
         # PHASE 2: Création des tables avec colonnes simples
         for table in schema_def.tables:
             if table.id in existing_tables:
-                if skip_existing:
-                    report.warnings.append(f"Table '{table.id}' ignorée (existe déjà)")
-                    table_mapping[table.id] = table.id
-                    continue
-                else:
-                    report.errors.append(f"Table '{table.id}' existe déjà")
-                    continue
-            
-            # Préparer les colonnes simples (non-référence)
-            simple_columns = []
-            for col in table.get_simple_columns():
-                col_def = {
-                    "id": col.id,
-                    "type": col.type,
-                }
-                if col.label:
-                    col_def["label"] = col.label
-                if col.formula:
-                    col_def["formula"] = col.formula
-                    col_def["isFormula"] = True
-                if col.choices:
-                    col_def["widgetOptions"] = {"choices": col.choices}
-                if col.description:
-                    col_def["description"] = col.description
-                
-                simple_columns.append(col_def)
-            
-            # Créer la table
+                report.warnings.append(f"Table '{table.id}' ignorée (existe déjà)")
+                continue
+
+            simple_columns = [_simple_column_dict(col) for col in table.get_simple_columns()]
             try:
-                payload = prepare_table_payload(table.id, simple_columns)
-                tables_created = await client.create_tables(doc_id, payload)
-                
-                if tables_created:
-                    actual_id = tables_created[0].get("id", table.id)
-                    table_mapping[table.id] = actual_id
-                    report.tables_created.append({
-                        "id": actual_id,
-                        "requested_id": table.id,
-                        "columns_count": len(simple_columns)
-                    })
-                else:
-                    table_mapping[table.id] = table.id
-                    report.tables_created.append({
-                        "id": table.id,
-                        "columns_count": len(simple_columns)
-                    })
-                    
+                result = await create_table_with_columns(client, doc_id, table.id, simple_columns)
             except Exception as e:
                 report.errors.append(f"Échec création table '{table.id}': {str(e)}")
                 continue
-        
-        # PHASE 3: Cache des colRef pour les références
-        col_ref_cache: Dict[str, Dict[str, int]] = {}
-        
-        async def get_col_ref(target_table: str, column_name: str) -> Optional[int]:
-            """Récupère le colRef avec cache."""
-            actual_table = table_mapping.get(target_table, target_table)
-            
-            if actual_table not in col_ref_cache:
-                try:
-                    columns_list = await client.list_columns(doc_id, actual_table)
-                    col_ref_cache[actual_table] = {}
-                    for col in columns_list:
-                        col_id = col.id
-                        col_fields = col.fields if hasattr(col, 'fields') else {}
-                        col_label = col_fields.get("label", col_id)
-                        col_ref = col_fields.get("colRef")
-                        col_ref_cache[actual_table][col_id] = col_ref
-                        col_ref_cache[actual_table][col_label] = col_ref
-                except Exception:
-                    pass
-            
-            return col_ref_cache.get(actual_table, {}).get(column_name)
-        
-        # PHASE 4: Création des colonnes de référence
+            table_mapping[table.id] = result["table_id"]
+            column_mapping[table.id] = result["columns"]
+            created.add(table.id)
+            report.warnings.extend(result["warnings"])
+            report.tables_created.append({
+                "id": result["table_id"],
+                "requested_id": table.id,
+                "columns_count": len(simple_columns),
+                "columns": result["columns"],
+            })
+
+        # PHASES 3-4: Colonnes de référence et relations inverses
         for table in schema_def.tables:
-            actual_table_id = table_mapping.get(table.id, table.id)
-            
+            if table.id not in created:
+                continue
+            actual_table_id = table_mapping[table.id]
+
             for col in table.get_reference_columns():
+                target_table = table_mapping.get(col.target_table)
+                if not target_table:
+                    report.errors.append(
+                        f"Référence {table.id}.{col.id} non créée : "
+                        f"table cible '{col.target_table}' non créée"
+                    )
+                    continue
+                ref_type = f"{col.type}:{target_table}"
                 try:
-                    target_table = table_mapping.get(col.target_table, col.target_table)
-                    ref_type = f"RefList:{target_table}" if col.type == "RefList" else f"Ref:{target_table}"
-                    
-                    # Résoudre visibleCol si spécifié
                     visible_col_ref = None
                     if col.visible_column:
-                        visible_col_ref = await get_col_ref(col.target_table, col.visible_column)
+                        # ID réel si Grist a modifié l'ID demandé (ex. 'Prénom' -> 'Prenom')
+                        visible_name = column_mapping.get(col.target_table, {}).get(
+                            col.visible_column, col.visible_column
+                        )
+                        index = await _existing_columns(client, doc_id, target_table, col_cache)
+                        visible_col_ref = index.get(visible_name)
                         if visible_col_ref is None:
                             report.warnings.append(
                                 f"Colonne visible '{col.visible_column}' non résolue "
                                 f"pour {table.id}.{col.id}"
                             )
-                    
-                    # Créer la colonne
-                    payload = prepare_column_payload(
-                        column_id=col.id,
-                        column_type=ref_type,
-                        label=col.label,
-                        visible_col=visible_col_ref
+
+                    actual_col, col_warnings = await _create_reference(
+                        client, doc_id, actual_table_id, col.id, ref_type,
+                        label=col.label, visible_col=visible_col_ref,
+                        description=col.description,
                     )
-                    
-                    await client.create_columns(doc_id, actual_table_id, payload)
-                    
+                    report.warnings.extend(col_warnings)
                     report.references_created.append({
                         "table": actual_table_id,
-                        "column": col.id,
+                        "column": actual_col,
                         "target": target_table,
                         "type": ref_type
                     })
-                    
-                    # Créer la relation inverse si demandée
-                    if col.reverse_column:
-                        try:
-                            reverse_payload = prepare_column_payload(
-                                column_id=col.reverse_column,
-                                column_type=f"RefList:{actual_table_id}",
-                                label=f"{table.id}s"
-                            )
-                            
-                            await client.create_columns(doc_id, target_table, reverse_payload)
-                            
-                            report.references_created.append({
-                                "table": target_table,
-                                "column": col.reverse_column,
-                                "target": actual_table_id,
-                                "type": f"RefList:{actual_table_id}",
-                                "is_reverse": True
-                            })
-                        except Exception as e:
-                            report.warnings.append(
-                                f"Échec relation inverse '{col.reverse_column}': {str(e)}"
-                            )
-                    
                 except Exception as e:
                     report.errors.append(
                         f"Échec création référence {table.id}.{col.id}: {str(e)}"
                     )
-        
-        # PHASE 5: Insertion des données
+                    continue
+
+                if col.reverse_column:
+                    try:
+                        reverse = await add_reverse_reference(
+                            client, doc_id, actual_table_id, actual_col, col.reverse_column
+                        )
+                        report.warnings.extend(reverse["warnings"])
+                        report.references_created.append({
+                            "table": reverse["table"],
+                            "column": reverse["column"],
+                            "target": actual_table_id,
+                            "type": f"RefList:{actual_table_id}",
+                            "is_reverse": True,
+                            "two_way": reverse["two_way"],
+                        })
+                    except Exception as e:
+                        report.warnings.append(
+                            f"Échec relation inverse '{col.reverse_column}': {str(e)}"
+                        )
+
+        # PHASE 5: Insertion des données (tables créées par cet appel uniquement)
         if insert_data and schema_def.data:
             for table_id, records in schema_def.data.items():
-                actual_table_id = table_mapping.get(table_id, table_id)
-                
+                if not records:
+                    continue
+                if table_id not in created:
+                    if table_id in existing_tables:
+                        report.warnings.append(
+                            f"Données pour '{table_id}' non insérées : table existante non modifiée"
+                        )
+                    continue
+                actual_table_id = table_mapping[table_id]
                 try:
-                    if records:
-                        record_ids = await client.add_records(doc_id, actual_table_id, records)
-                        report.records_inserted.append({
-                            "table": actual_table_id,
-                            "count": len(record_ids)
-                        })
+                    record_ids = await client.add_records(doc_id, actual_table_id, records)
+                    report.records_inserted.append({
+                        "table": actual_table_id,
+                        "count": len(record_ids)
+                    })
                 except Exception as e:
                     report.warnings.append(
                         f"Échec insertion données dans '{table_id}': {str(e)}"
                     )
-        
+
         # Résultat final
         success = len(report.errors) == 0
-        
+
         return {
             "success": success,
             "message": (
@@ -507,7 +587,7 @@ async def create_schema(
             ),
             "report": report.to_dict()
         }
-        
+
     except Exception as e:
         report.errors.append(str(e))
         return {

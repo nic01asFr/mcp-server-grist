@@ -5,6 +5,45 @@ Tous les changements notables de ce projet seront documentés dans ce fichier.
 Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/),
 et ce projet adhère au [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.2] - 2026-11-08
+
+Correctifs des outils de schéma et de colonnes, vérifiés sur une vraie
+instance Grist (grist-core 1.7.22, et 1.1.10 pour la compatibilité).
+Aucun paramètre d'outil ne change ; les réponses gagnent seulement des
+clés (`warnings`, `columns`, `reverse_column.two_way`).
+
+### Corrigé
+
+- **Colonne affichée des références** (`create_schema`, `create_reference_column`,
+  `create_column`, `modify_column`) : la formule d'affichage est désormais posée.
+  Auparavant `visibleCol` était enregistré mais Grist affichait l'identifiant de ligne.
+- **Relation inverse (`reverse` / `reverse_column`)** : utilise la référence à double
+  sens native de Grist (`AddReverseColumn`), synchronisée et remplie automatiquement.
+  Auparavant une colonne RefList indépendante et vide était créée (libellé « Tachess »).
+  Sur une instance Grist trop ancienne, repli sur une colonne calculée
+  (`lookupRecords`) en lecture seule, avec avertissement.
+- **`untieColIdFromLabel` et `description`** : appliqués après la création, car Grist
+  les ignore à la création (AddTable/AddColumn). Changer un libellé ne renomme plus l'ID.
+- **`create_table`** : la clé `choices` d'une colonne est fusionnée dans `widgetOptions`
+  (auparavant : erreur HTTP 400). Les IDs réellement attribués par Grist sont renvoyés
+  (`columns`) et signalés s'ils diffèrent ; le libellé garde l'ID demandé (« Prénom »).
+- **`create_schema`** :
+  - la notation `"Ref:Table"` / `"RefList:Table"` est traitée comme une référence
+    (auparavant créée comme colonne simple, sans colonne affichée) ;
+  - relancer le même schéma ne crée plus de doublons : les tables existantes ne sont
+    jamais modifiées (ni colonnes, ni références, ni données) ;
+  - avec `skip_existing=False`, échoue sans rien créer si une table existe déjà ;
+  - les `widgetOptions` des colonnes du schéma sont appliquées.
+- **`validate_schema`** : vérifie que la colonne `visible` existe dans la table cible et
+  que la colonne `reverse` n'existe pas déjà ; signale une référence sans `visible`.
+- **`create_reference_column`** : une erreur d'accès à l'API (clé, réseau) n'est plus
+  présentée comme « table cible inexistante » ; la table source est vérifiée.
+
+### Ajouté
+
+- `GristClient.apply_user_actions(doc_id, actions)` : appel de `POST /docs/{doc}/apply`.
+- Tests `tests/test_schema_tools.py`.
+
 ## [0.2.0] - 2024-12-30
 
 ### Ajouté
