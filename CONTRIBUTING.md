@@ -40,7 +40,8 @@ Merci de votre intérêt pour contribuer au Grist MCP Server ! Voici comment vou
 ## Documentation des outils
 
 `docs/tools-reference.mdx` est généré depuis le code. Après avoir ajouté ou modifié
-un outil (paramètres, docstring), régénérez-le et citez l'outil dans le README :
+un outil (paramètres, docstring), régénérez-le et citez l'outil dans `README.md`
+(anglais) et `README.fr.md` (français) :
 
 ```bash
 python scripts/generate_tools_reference.py
@@ -48,6 +49,7 @@ python scripts/generate_tools_reference.py
 
 Le test `tests/test_docs.py` échoue si la référence n'est pas à jour, ou si le README
 cite un outil ou un paramètre qui n'existe pas.
+Les deux README doivent rester alignés (même contenu, deux langues).
 
 ## Publier une version (mainteneurs)
 

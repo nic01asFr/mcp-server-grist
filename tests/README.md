@@ -15,7 +15,7 @@ le client Grist est simulé.
 - `test_security.py` : masquage de la clé API, protection contre l'injection SQL
 - `test_compliance.py` : conformité au protocole MCP
 - `test_docs.py` : la documentation correspond aux outils réels (référence générée à
-  jour, README sans outil ni paramètre inexistant)
+  jour, README anglais et français sans outil ni paramètre inexistant)
 
 ## Exécution
 

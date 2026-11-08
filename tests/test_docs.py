@@ -3,7 +3,7 @@ Cohérence entre la documentation et les outils réellement exposés.
 
 - docs/tools-reference.mdx doit être à jour (régénérer avec
   `python scripts/generate_tools_reference.py`) ;
-- le README doit citer chaque outil, et aucun outil inexistant ;
+- les README (anglais et français) doivent citer chaque outil, et aucun outil inexistant ;
 - les exemples `await outil(param=...)` de la doc doivent utiliser des
   outils et des paramètres qui existent.
 """
@@ -24,7 +24,8 @@ TOOLS = {fn.__name__: fn for fn in gen.collect_tools()}
 TOOL_PREFIXES = ("list_", "describe_", "get_", "create_", "modify_", "delete_", "add_",
                  "update_", "download_", "upload_", "filter_", "execute_", "validate_",
                  "export_", "move_", "force_", "clear_")
-HAND_WRITTEN_DOCS = [ROOT / "README.md", ROOT / "docs" / "index.mdx"]
+READMES = [ROOT / "README.md", ROOT / "README.fr.md"]
+HAND_WRITTEN_DOCS = READMES + [ROOT / "docs" / "index.mdx"]
 
 
 def test_tools_reference_is_up_to_date():
@@ -34,10 +35,11 @@ def test_tools_reference_is_up_to_date():
         "lancez python scripts/generate_tools_reference.py")
 
 
-def test_readme_lists_every_tool():
-    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+@pytest.mark.parametrize("path", READMES, ids=lambda p: p.name)
+def test_readme_lists_every_tool(path):
+    readme = path.read_text(encoding="utf-8")
     missing = [name for name in TOOLS if f"`{name}`" not in readme]
-    assert not missing, f"Outils absents du README : {missing}"
+    assert not missing, f"Outils absents de {path.name} : {missing}"
 
 
 @pytest.mark.parametrize("path", HAND_WRITTEN_DOCS, ids=lambda p: p.name)

@@ -1,104 +1,29 @@
-![Grist-Logo.png](https://www.getgrist.com/wp-content/uploads/2023/03/Grist-Logo.png)
-
 # Grist MCP Server
 
 [![PyPI version](https://img.shields.io/pypi/v/mcp-server-grist.svg)](https://pypi.org/project/mcp-server-grist/)
 [![Python versions](https://img.shields.io/pypi/pyversions/mcp-server-grist.svg)](https://pypi.org/project/mcp-server-grist/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-Un serveur MCP (Model Context Protocol) pour interagir avec l'API Grist. Ce serveur permet d'accéder et de manipuler les données Grist directement depuis des modèles de langage comme Claude.
+*[Version française](https://github.com/nic01asFr/mcp-server-grist/blob/official/README.fr.md)*
 
-## Structure du projet
+An [MCP](https://modelcontextprotocol.io) (Model Context Protocol) server for the [Grist](https://www.getgrist.com) API. It lets AI assistants such as Claude read and edit your Grist data: browse documents, query tables with SQL, add and update records, and create tables, columns and whole schemas with relations between tables.
 
-```
-mcp-server-grist/
-├── src/
-│   └── mcp_server_grist/     # Package principal
-│       ├── __init__.py       # Point d'entrée du package
-│       ├── __main__.py       # Support pour exécution en module
-│       ├── version.py        # Gestion de version
-│       ├── main.py           # Point d'entrée principal
-│       ├── server.py         # Configuration du serveur MCP
-│       ├── client.py         # Client API Grist
-│       ├── models.py         # Modèles de données Pydantic
-│       ├── types.py          # Définitions de schéma (create_schema)
-│       └── tools/            # Outils MCP par catégorie (navigation, records,
-│                             # queries, administration, schema, access,
-│                             # export, attachments, webhooks, utils)
-├── tests/                    # Tests automatisés (pytest)
-├── docs/                     # Documentation (référence des outils générée)
-├── scripts/                  # Génération de docs/tools-reference.mdx
-├── requirements.txt          # Dépendances Python
-├── pyproject.toml           # Configuration moderne du package
-├── Dockerfile               # Configuration Docker
-├── docker-compose.yml       # Configuration multi-services
-├── .env.template            # Template pour variables d'environnement
-└── README.md                # Documentation principale
-```
+Works with any Grist instance: [docs.getgrist.com](https://docs.getgrist.com), self-hosted Grist, or [grist.numerique.gouv.fr](https://grist.numerique.gouv.fr).
 
-## Prérequis
+## Quick start
 
-- Python 3.10+
-- Une clé API Grist valide
-- Les packages Python suivants (installés automatiquement) : `fastmcp`, `httpx`, `pydantic`, `python-dotenv`
+You need Python 3.10+ and a Grist API key (Grist: *Profile settings → API*).
 
-## Utilisation à la volée
-
-### Via uvx (recommandé)
-
-En utilisant uvx, l'environnement et le téléchargement des paquets se fait à la volée au moment de l'éxécution
-
-```bash
-uvx mcp-server-grist
-```
-### Utilisation avec votre Assitant IA favori qui supporte le protocole MCP
-
-La configuration en json est : 
-
-```json
-{
-    "mcpServers": {
-        "grist-server": {
-            "disabled": false,
-            "timeout": 60,
-            "type": "stdio",
-            "command": "uvx",
-            "args": [
-                "mcp-server-grist"
-            ],
-            "env": {
-                "GRIST_API_KEY": "ta_cle_API_GRIST"
-            }
-        }
-    }
-}
-```  
-
-## Installation
-
-### Via pip 
-
-```bash
-pip install mcp-server-grist
-```
-
-Après l'installation, vous pouvez exécuter le serveur avec :
-
-```bash
-mcp-server-grist
-```
-
-### Utilisation avec Claude Desktop
-
-Pour utiliser ce serveur MCP avec Claude Desktop, ajoutez la configuration suivante à votre fichier `claude_desktop_config.json` (après `pip install mcp-server-grist`) :
+Add the server to your MCP client configuration. For Claude Desktop, edit `claude_desktop_config.json`:
 
 ```json
 {
   "mcpServers": {
-    "grist-mcp": {
-      "command": "mcp-server-grist",
+    "grist": {
+      "command": "uvx",
+      "args": ["mcp-server-grist"],
       "env": {
-        "GRIST_API_KEY": "votre_clé_api_grist",
+        "GRIST_API_KEY": "your_grist_api_key",
         "GRIST_API_URL": "https://docs.getgrist.com/api"
       }
     }
@@ -106,401 +31,201 @@ Pour utiliser ce serveur MCP avec Claude Desktop, ajoutez la configuration suiva
 }
 ```
 
-Sans installation préalable, utilisez la configuration `uvx` ci-dessus.
-
-### Installation en mode développement
-
-Pour contribuer ou personnaliser le serveur :
-
-```bash
-# Cloner le repository
-git clone https://github.com/modelcontextprotocol/mcp-server-grist.git
-cd mcp-server-grist
-
-# Installer en mode développement
-pip install -e .
-
-# Lancer les tests
-python -m pytest tests
-```
-
-### Via Docker
-
-Pour un déploiement rapide avec Docker :
-
-```bash
-# Construire l'image
-docker build -t mcp/grist-mcp-server .
-
-# Exécuter le container
-docker run -i --rm \
-  -e GRIST_API_KEY=votre_clé_api \
-  -e GRIST_API_URL=https://docs.getgrist.com/api \
-  mcp/grist-mcp-server
-
-# Mode streamable-http (--host 0.0.0.0 est nécessaire dans un conteneur)
-docker run --rm -p 8000:8000 \
-  -e GRIST_API_KEY=votre_clé_api \
-  mcp/grist-mcp-server --transport streamable-http --host 0.0.0.0
-```
-
-Sans `GRIST_API_URL`, l'image utilise `https://grist.numerique.gouv.fr/api`
-(`GRIST_API_HOST` reste accepté).
-
-### Via Docker Compose
-
-Pour déployer plusieurs modes de transport en parallèle :
-
-```bash
-# Configurer les variables d'environnement
-cp .env.template .env
-# Éditer le fichier .env avec votre clé API
-
-# Lancer les services
-docker-compose up
-```
+[`uvx`](https://docs.astral.sh/uv/) downloads and runs the package, no installation needed. Restart your client: the Grist tools are now available to the assistant.
 
 ## Configuration
 
-### Variables d'environnement
+| Variable | Required | Description |
+|---|---|---|
+| `GRIST_API_KEY` | yes | Your Grist API key |
+| `GRIST_API_URL` | no | API URL of your Grist instance, e.g. `https://docs.getgrist.com/api` (default) or `https://grist.example.org/api` |
+| `GRIST_API_HOST` | no | Older name for the same setting, used when `GRIST_API_URL` is not set |
+| `LOG_LEVEL` | no | `DEBUG`, `INFO` (default), `WARNING`, `ERROR` |
 
-Créez un fichier `.env` basé sur `.env.template` avec les variables suivantes :
-```
-GRIST_API_KEY=votre_clé_api
-GRIST_API_HOST=https://docs.getgrist.com/api
-LOG_LEVEL=INFO  # Options: DEBUG, INFO, WARNING, ERROR, CRITICAL
-```
+Variables can also be set in a `.env` file (see `.env.template`).
 
-Vous trouverez votre clé API dans les paramètres de votre compte Grist.
+## Other ways to run the server
 
-### Configuration avec Claude Desktop
-
-Ajoutez ceci à votre `claude_desktop_config.json` :
-
-#### Version Python
-
-```json
-{
-  "mcpServers": {
-    "grist-mcp": {
-      "command": "python",
-      "args": [
-        "-m", "mcp_server_grist"
-      ],
-      "env": {
-        "GRIST_API_KEY": "votre_clé_api",
-        "GRIST_API_URL": "https://docs.getgrist.com/api"
-      }
-    }
-  }
-}
-```
-
-#### Version Docker
-
-```json
-{
-  "mcpServers": {
-    "grist-mcp": {
-      "command": "docker",
-      "args": [
-        "run",
-        "--rm",
-        "-i",
-        "-e", "GRIST_API_KEY=votre_clé_api",
-        "-e", "GRIST_API_URL=https://docs.getgrist.com/api",
-        "mcp/grist-mcp-server"
-      ]
-    }
-  }
-}
-```
-
-## Options de démarrage
-
-Le serveur prend en charge plusieurs modes de transport conformes au standard MCP :
-
-### En mode module (recommandé)
+### With pip
 
 ```bash
-# Mode stdio (par défaut pour Claude)
-python -m mcp_server_grist --transport stdio
-
-# Mode HTTP streamable (pour intégration web)
-python -m mcp_server_grist --transport streamable-http --host 127.0.0.1 --port 8000 --path /mcp
-
-# Active le mode debug avec logging détaillé
-python -m mcp_server_grist --debug
+pip install mcp-server-grist
+mcp-server-grist                    # stdio, for local MCP clients
 ```
 
-### Options supplémentaires
+In your MCP client, use `"command": "mcp-server-grist"` (or `"command": "python", "args": ["-m", "mcp_server_grist"]`) with the same `env` block as above.
 
-```
-Options:
-  --transport {stdio,streamable-http,sse}
-                        Type de transport à utiliser
-  --host HOST           Hôte pour les transports HTTP (défaut: 127.0.0.1)
-  --port PORT           Port pour les transports HTTP (défaut: 8000)
-  --path PATH           Chemin pour streamable-http (défaut: /mcp)
-  --mount-path MOUNT_PATH
-                        Chemin pour SSE (défaut: /sse)
-  --debug               Active le mode debug
-  --help                Affiche l'aide
+### Over HTTP
+
+```bash
+mcp-server-grist --transport streamable-http --host 127.0.0.1 --port 8000 --path /mcp
 ```
 
-### Sécurité des transports
+| Option | Default | Description |
+|---|---|---|
+| `--transport` | `stdio` | `stdio`, `streamable-http`, or `sse` (deprecated) |
+| `--host` | `127.0.0.1` | Interface for HTTP transports |
+| `--port` | `8000` | Port for HTTP transports |
+| `--path` | `/mcp` | Endpoint for `streamable-http` |
+| `--mount-path` | `/sse` | Endpoint for `sse` |
+| `--debug` | | Verbose logging |
 
-Pour les transports HTTP, nous recommandons :
+**Security:** the server does not authenticate HTTP clients. Anyone who can reach it acts with your Grist API key. Keep the default `127.0.0.1`, and put a reverse proxy with HTTPS and authentication in front of it before exposing it to a network.
 
-- Utiliser `127.0.0.1` (localhost, valeur par défaut) plutôt que `0.0.0.0` pour limiter l'accès au réseau local
-- Le serveur n'authentifie pas ses clients HTTP : quiconque l'atteint agit avec votre clé Grist
-- Pour une exposition à Internet, utiliser un proxy inverse avec HTTPS et authentification
+### With Docker
 
-## Fonctionnalités
+```bash
+docker build -t mcp/grist-mcp-server .
 
-- Accès aux données Grist directement depuis les modèles de langage
-- Liste des organisations, espaces de travail, documents, tables et colonnes
-- Gestion des enregistrements (création, lecture, mise à jour, suppression)
-- Filtrage et tri des données, requêtes SQL (SELECT uniquement)
-- Création de tables, de colonnes et de schémas complets avec relations entre tables
-- Authentification via clé API
-- Gestion des accès utilisateurs
-- Export et téléchargement (SQLite, Excel, CSV)
-- Gestion des pièces jointes
-- Gestion des webhooks
+# stdio
+docker run -i --rm -e GRIST_API_KEY=your_key -e GRIST_API_URL=https://docs.getgrist.com/api \
+  mcp/grist-mcp-server
 
-## Outils disponibles
+# HTTP (--host 0.0.0.0 is required inside a container)
+docker run --rm -p 8000:8000 -e GRIST_API_KEY=your_key \
+  mcp/grist-mcp-server --transport streamable-http --host 0.0.0.0
+```
 
-Le serveur expose 54 outils. La [référence complète](https://github.com/nic01asFr/mcp-server-grist/blob/official/docs/tools-reference.mdx) détaille les paramètres de chacun.
+Without `GRIST_API_URL`, the image uses `https://grist.numerique.gouv.fr/api`. In an MCP client, use `"command": "docker"` with `"args": ["run", "-i", "--rm", "-e", "GRIST_API_KEY=...", "mcp/grist-mcp-server"]`.
+
+`docker compose up` starts a stdio and an HTTP service, configured from `.env`.
+
+## Available tools
+
+The server exposes 54 tools. The [tools reference](https://github.com/nic01asFr/mcp-server-grist/blob/official/docs/tools-reference.mdx) lists the parameters of each one.
 
 ### Navigation
-- `list_organizations` : Liste les organisations
-- `describe_organization` : Obtient des informations détaillées sur une organisation
-- `list_workspaces` : Liste les espaces de travail d'une organisation
-- `describe_workspace` : Obtient des informations détaillées sur un espace de travail
-- `list_documents` : Liste les documents d'un espace de travail
-- `describe_document` : Obtient des informations détaillées sur un document
-- `list_tables` : Liste les tables d'un document
-- `list_columns` : Liste les colonnes d'une table
-- `list_records` : Liste les enregistrements avec tri et limite
-- `get_table_schema` : Obtient le schéma détaillé d'une table
+- `list_organizations`: list organizations
+- `describe_organization`: details of an organization
+- `list_workspaces`: list the workspaces of an organization
+- `describe_workspace`: details of a workspace
+- `list_documents`: list the documents of a workspace
+- `describe_document`: details of a document
+- `list_tables`: list the tables of a document
+- `list_columns`: list the columns of a table
+- `list_records`: list records, with sorting and limit
+- `get_table_schema`: detailed schema of a table
 
-### Manipulation des données
-- `add_grist_records` : Ajoute des enregistrements
-- `add_grist_records_safe` : Ajoute des enregistrements après vérification des colonnes
-- `update_grist_records` : Met à jour des enregistrements
-- `delete_grist_records` : Supprime des enregistrements
+### Records
+- `add_grist_records`: add records
+- `add_grist_records_safe`: add records after checking the column names
+- `update_grist_records`: update records
+- `delete_grist_records`: delete records
 
-### Filtrage et requêtes SQL
-- `filter_sql_query` : Filtrage simple sans écrire de SQL
-  * Conditions WHERE, tri et limite
-- `execute_sql_query` : Requête SQL personnalisée (SELECT uniquement)
-  * Jointures, sous-requêtes, paramètres et timeout
+### SQL queries
+- `filter_sql_query`: filter a table without writing SQL (conditions, sorting, limit)
+- `execute_sql_query`: run a custom `SELECT` query (joins, subqueries, parameters, timeout)
 
 ### Administration
-- `modify_organization`, `delete_organization` : Gèrent une organisation
-- `create_workspace`, `modify_workspace`, `delete_workspace` : Gèrent les espaces de travail
-- `create_document`, `modify_document`, `delete_document` : Gèrent les documents
-- `move_document` : Déplace un document vers un autre espace de travail
-- `force_reload_document` : Force le rechargement d'un document
-- `delete_document_history` : Supprime l'historique d'un document
-- `create_table`, `modify_table` : Créent ou renomment une table
-- `create_column`, `modify_column`, `delete_column` : Gèrent les colonnes (types, formules, choix, références)
+- `modify_organization`, `delete_organization`: manage an organization
+- `create_workspace`, `modify_workspace`, `delete_workspace`: manage workspaces
+- `create_document`, `modify_document`, `delete_document`: manage documents
+- `move_document`: move a document to another workspace
+- `force_reload_document`: reload a document
+- `delete_document_history`: trim a document's history
+- `create_table`, `modify_table`: create or rename a table
+- `create_column`, `modify_column`, `delete_column`: manage columns (types, formulas, choices, references)
 
-### Schéma et relations
-- `create_schema` : Crée en une fois des tables, leurs colonnes, leurs relations et des données initiales
-- `validate_schema` : Vérifie un schéma sans rien créer
-- `create_reference_column` : Crée une colonne référence qui affiche la colonne choisie, avec relation inverse optionnelle
-- `export_schema` : Exporte le schéma d'un document (JSON, YAML ou diagramme Mermaid)
+### Schemas and relations
+- `create_schema`: create tables, their columns, the relations between them and initial data in one call
+- `validate_schema`: check a schema without creating anything
+- `create_reference_column`: create a reference column showing the chosen column of the target table, optionally with a two-way (reverse) relation
+- `export_schema`: export a document's schema as JSON, YAML or a Mermaid diagram
 
-### Gestion des accès
-- `list_organization_access` : Liste les utilisateurs ayant accès à une organisation
-- `modify_organization_access` : Modifie l'accès d'un utilisateur à une organisation
-- `list_workspace_access` : Liste les utilisateurs ayant accès à un espace de travail
-- `modify_workspace_access` : Modifie l'accès d'un utilisateur à un espace de travail
-- `list_document_access` : Liste les utilisateurs ayant accès à un document
-- `modify_document_access` : Modifie l'accès d'un utilisateur à un document
+### Access management
+- `list_organization_access`, `modify_organization_access`: users of an organization
+- `list_workspace_access`, `modify_workspace_access`: users of a workspace
+- `list_document_access`, `modify_document_access`: users of a document
 
-### Export et téléchargement
-- `download_document_sqlite` : Télécharge un document au format SQLite
-- `download_document_excel` : Télécharge une table au format Excel
-- `download_table_csv` : Télécharge une table au format CSV
+### Export
+- `download_document_sqlite`: download a document as SQLite
+- `download_document_excel`: download a table as Excel
+- `download_table_csv`: download a table as CSV
 
-### Gestion des pièces jointes
-- `list_attachments` : Liste les pièces jointes d'un document
-- `get_attachment_info` : Obtient des informations sur une pièce jointe
-- `download_attachment` : Télécharge une pièce jointe
-- `upload_attachment` : Téléverse une pièce jointe
+### Attachments
+- `list_attachments`: list the attachments of a document
+- `get_attachment_info`: metadata of an attachment
+- `download_attachment`: download an attachment
+- `upload_attachment`: upload an attachment
 
-### Gestion des webhooks
-- `list_webhooks` : Liste les webhooks d'un document
-- `create_webhook` : Crée un webhook
-- `modify_webhook` : Modifie un webhook
-- `delete_webhook` : Supprime un webhook
-- `clear_webhook_queue` : Vide la file d'attente des webhooks
+### Webhooks
+- `list_webhooks`, `create_webhook`, `modify_webhook`, `delete_webhook`: manage webhooks
+- `clear_webhook_queue`: empty the webhook queue
 
-## Exemples d'utilisation
+## Examples
+
+You normally just ask the assistant in plain language ("create a Projects table linked to Tasks"); it chooses the tools. The examples below show the corresponding tool calls and their arguments.
 
 ```python
-# Liste des organisations
-orgs = await list_organizations()
+# Explore
+await list_tables(doc_id="abc123")
+await list_records(doc_id="abc123", table_id="Tasks", sort="-due_date", limit=10)
 
-# Liste des espaces de travail
-workspaces = await list_workspaces(org_id=1)
-
-# Liste des documents
-docs = await list_documents(workspace_id=1)
-
-# Liste des tables
-tables = await list_tables(doc_id="abc123")
-
-# Liste des colonnes
-columns = await list_columns(doc_id="abc123", table_id="Table1")
-
-# Liste des enregistrements avec tri et limite
-records = await list_records(
+# Filter without SQL
+await filter_sql_query(
     doc_id="abc123",
-    table_id="Table1",
-    sort="name",
-    limit=10
+    table_id="Tasks",
+    columns=["title", "status"],
+    where_conditions={"status": "open"},
+    order_by="title",
+    limit=20
 )
 
-# Filtrage simple avec filter_sql_query
-filtered_records = await filter_sql_query(
+# Custom SQL (SELECT only)
+await execute_sql_query(
     doc_id="abc123",
-    table_id="Table1",
-    columns=["name", "age", "status"],
-    where_conditions={
-        "organisation": "OPSIA",
-        "status": "actif"
-    },
-    order_by="name",
-    limit=10
+    sql_query="SELECT t.title, p.name FROM Tasks t JOIN Projects p ON t.project = p.id WHERE t.status = ?",
+    parameters=["open"]
 )
 
-# Requête SQL complexe avec execute_sql_query
-sql_result = await execute_sql_query(
-    doc_id="abc123",
-    sql_query="""
-        SELECT t1.name, t1.age, t2.department
-        FROM Table1 t1
-        JOIN Table2 t2 ON t1.id = t2.employee_id
-        WHERE t1.status = ? AND t1.age > ?
-        ORDER BY t1.name
-        LIMIT ?
-    """,
-    parameters=["actif", 25, 10],
-    timeout_ms=2000
-)
+# Add and update records
+await add_grist_records(doc_id="abc123", table_id="Tasks",
+                        records=[{"title": "Write docs", "status": "open"}])
+await update_grist_records(doc_id="abc123", table_id="Tasks",
+                           records=[{"id": 1, "status": "done"}])
 
-# Ajout d'enregistrements
-new_records = await add_grist_records(
-    doc_id="abc123",
-    table_id="Table1",
-    records=[{"name": "John", "age": 30}]
-)
+# Formula column
+await create_column(doc_id="abc123", table_id="Orders", column_id="total",
+                    column_type="Numeric", label="Total", formula="$price * $quantity")
 
-# Mise à jour d'enregistrements
-updated_records = await update_grist_records(
-    doc_id="abc123",
-    table_id="Table1",
-    records=[{"id": 1, "name": "John", "age": 31}]
-)
-
-# Création d'une colonne calculée
-formula_column = await create_column(
-    doc_id="abc123",
-    table_id="Table1",
-    column_id="total",
-    column_type="Numeric",
-    label="Total",
-    formula="$prix * $quantite"
-)
-
-# Création d'un schéma complet avec une relation entre tables
-schema = await create_schema(
+# Two related tables in one call
+await create_schema(
     doc_id="abc123",
     schema={
         "tables": {
-            "Clients": {"columns": {"nom": {"type": "Text", "label": "Nom"}}},
-            "Commandes": {"columns": {
-                "numero": "Text",
-                "client": {"type": "Ref", "target": "Clients",
-                           "visible": "nom", "reverse": "commandes"}
+            "Projects": {"columns": {"name": {"type": "Text", "label": "Name"}}},
+            "Tasks": {"columns": {
+                "title": "Text",
+                "status": {"type": "Choice", "choices": ["open", "done"]},
+                "project": {"type": "Ref", "target": "Projects",
+                            "visible": "name", "reverse": "tasks"}
             }}
-        }
+        },
+        "data": {"Projects": [{"name": "Website"}]}
     }
 )
 
-# Téléchargement d'une table au format Excel
-excel_doc = await download_document_excel(
-    doc_id="abc123",
-    table_id="Table1",
-    header="label"
-)
+# Export a table to Excel
+await download_document_excel(doc_id="abc123", table_id="Tasks", header="label")
 
-# Gestion des accès
-await modify_document_access(
-    doc_id="abc123",
-    user_email="utilisateur@exemple.com",
-    access_level="editors"
-)
+# Share a document
+await modify_document_access(doc_id="abc123", user_email="someone@example.com",
+                             access_level="editors")
 ```
 
-## Cas d'utilisation détaillés
+In a schema, a reference column is written `{"type": "Ref", "target": "Table", "visible": "column"}` (or `"Ref:Table"`). `"visible"` is the column displayed in the cell; `"reverse"` adds the matching column in the target table, kept in sync by Grist. Re-running the same schema creates nothing twice: existing tables are left untouched.
 
-### Navigation et exploration
-- `list_organizations`, `list_workspaces`, `list_documents`, `list_tables`, `list_columns`
-  * Utilisez pour explorer la structure Grist et découvrir les données disponibles
-  * Nécessaires pour obtenir les IDs avant d'exécuter des opérations spécifiques
-  * Idéal pour la phase initiale d'analyse des données
+## Development
 
-### Requêtes et filtrage
-- `list_records` : Pour obtenir tous les enregistrements d'une table
-- `filter_sql_query` : Pour les filtres simples sur une seule table
-- `execute_sql_query` : Pour les requêtes complexes avec jointures et sous-requêtes
+```bash
+git clone https://github.com/nic01asFr/mcp-server-grist.git
+cd mcp-server-grist
+pip install -e ".[dev]"
+pytest tests/
+```
 
-### Manipulation des données
-- `add_grist_records` et `add_grist_records_safe` : Pour ajouter des données avec ou sans validation
-- `update_grist_records` : Pour modifier des enregistrements existants
-- `delete_grist_records` : Pour supprimer des enregistrements
+The tools reference is generated from the code: after changing a tool, run `python scripts/generate_tools_reference.py`. See [CONTRIBUTING.md](https://github.com/nic01asFr/mcp-server-grist/blob/official/CONTRIBUTING.md) for the contribution and release process, and the [CHANGELOG](https://github.com/nic01asFr/mcp-server-grist/blob/official/CHANGELOG.md) for version history.
 
-### Structure et formules
-- `get_table_schema` et `list_columns` : Pour connaître les IDs de colonnes à utiliser dans les formules (`$id_colonne`)
-- `create_column` (paramètre `formula`) : Pour créer des colonnes calculées
-- `create_schema` et `validate_schema` : Pour créer une base complète, relations comprises, en une fois
+## License
 
-### Export et téléchargement
-- `download_document_sqlite`, `download_document_excel`, `download_table_csv` : Pour exporter les données
-- `download_attachment` : Pour récupérer les fichiers attachés
-
-### Gestion des accès
-- `list_*_access` et `modify_*_access` : Pour administrer les permissions utilisateurs
-
-### Intégrations externes
-- `create_webhook`, `modify_webhook` : Pour connecter Grist à d'autres services
-
-## Cas d'utilisation
-
-Le serveur MCP Grist est conçu pour :
-- Analyser et résumer les données Grist
-- Créer, mettre à jour et supprimer des enregistrements programmatiquement
-- Construire des rapports et des visualisations
-- Répondre aux questions sur les données stockées
-- Connecter Grist avec des modèles de langage pour des requêtes en langage naturel
-- Automatiser les flux de travail impliquant des données Grist
-- Intégrer Grist à d'autres systèmes via webhooks
-
-## Contribution
-
-Les contributions sont les bienvenues ! Voici comment contribuer :
-
-1. Forkez le projet
-2. Créez une branche pour votre fonctionnalité
-3. Committez vos changements
-4. Poussez vers la branche
-5. Ouvrez une Pull Request
-
-## Licence
-
-Ce serveur MCP est sous licence MIT.
+MIT

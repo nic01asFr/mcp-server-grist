@@ -5,6 +5,17 @@ Tous les changements notables de ce projet seront documentés dans ce fichier.
 Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/),
 et ce projet adhère au [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Non publié]
+
+### Documentation
+
+- README en anglais (page PyPI et GitHub), restructuré : démarrage rapide, tableau des
+  variables d'environnement, options HTTP, Docker, outils, exemples, développement.
+  Version française complète dans `README.fr.md`, avec lien entre les deux.
+- Corrige le lien `git clone` (pointait vers un autre dépôt), supprime les sections en
+  double et le logo Grist (le projet n'est pas un produit officiel Grist).
+- `tests/test_docs.py` vérifie les deux README.
+
 ## [0.2.2] - 2026-11-08
 
 Correctifs des outils de schéma et de colonnes, du démarrage et de Docker, vérifiés sur une vraie
