@@ -1,0 +1,476 @@
+{
+  "_lisez_moi": "Source éditoriale de la page publique et de la fiche pour agents. Les fichiers de site/ sont générés par scripts/generate_site.py à partir de ce fichier et des outils réels : ne jamais les modifier à la main. Modèle : docs/WIDGETS-AUTO-DESCRIPTIFS.md du dépôt Widgets-Grist.",
+  "base": "https://nic01asfr.github.io/mcp-server-grist/",
+  "widget": "mcp-server-grist",
+  "theme": {
+    "_source": "Deux thèmes, contrastes vérifiés par tests/test_site.py. « suite » : couleurs de grist.numerique.gouv.fr (custom.css de l'instance, palette uikit de La Suite numérique, relevée le 8 novembre 2026), sans la police Marianne, réservée aux sites de l'État. « grist » : thème du kit Widgets-Grist (kit-theme/0.1, paquet grist), couleurs de getgrist.com.",
+    "defaut": "suite",
+    "police": "systeme",
+    "themes": {
+      "suite": {
+        "nom": {
+          "fr": "La Suite numérique",
+          "en": "La Suite numérique"
+        },
+        "clair": {
+          "fond": "#FFFFFF",
+          "surface": "#FFFFFF",
+          "surface-2": "#F6F8F9",
+          "texte": "#222631",
+          "texte-2": "#555E74",
+          "bord": "#CFD5DE",
+          "accent": "#3E5DE7",
+          "bouton": "#3E5DE7",
+          "bouton-texte": "#FFFFFF"
+        },
+        "sombre": {
+          "fond": "#181B24",
+          "surface": "#222631",
+          "surface-2": "#222631",
+          "texte": "#EEF1F4",
+          "texte-2": "#DFE2EA",
+          "bord": "#4A5267",
+          "accent": "#A2B6FF",
+          "bouton": "#2845C1",
+          "bouton-texte": "#EDF0FF"
+        }
+      },
+      "grist": {
+        "nom": {
+          "fr": "Grist",
+          "en": "Grist"
+        },
+        "clair": {
+          "fond": "#FFFFFF",
+          "surface": "#FFFFFF",
+          "surface-2": "#DCF4EB",
+          "texte": "#262633",
+          "texte-2": "#494949",
+          "bord": "#D9D9D9",
+          "accent": "#017C51",
+          "bouton": "#16B378",
+          "bouton-texte": "#000000"
+        },
+        "sombre": {
+          "fond": "#161616",
+          "surface": "#1E1E1E",
+          "surface-2": "#102D1F",
+          "texte": "#F0F0F0",
+          "texte-2": "#CECECE",
+          "bord": "#353535",
+          "accent": "#16B378",
+          "bouton": "#16B378",
+          "bouton-texte": "#1E1E1E"
+        }
+      }
+    }
+  },
+  "liens": {
+    "depot": "https://github.com/nic01asFr/mcp-server-grist",
+    "pypi": "https://pypi.org/project/mcp-server-grist/",
+    "reference": "https://github.com/nic01asFr/mcp-server-grist/blob/official/docs/tools-reference.mdx",
+    "readme_dev": "https://github.com/nic01asFr/mcp-server-grist/blob/official/README.md",
+    "forum": "https://forum.grist.libre.sh/t/acceder-aux-donnees-grist-via-llm-mcp-server/1211",
+    "vitrine_widgets": "https://nic01asfr.github.io/Widgets-Grist/",
+    "gristcoder": "https://github.com/nic01asFr/GristCoder",
+    "mcp_officiel": "https://support.getgrist.com/mcp/"
+  },
+  "presentation": {
+    "titre": "mcp-server-grist",
+    "resume": "Serveur MCP qui donne à un assistant IA l'accès à l'API Grist avec une simple clé API : parcourir les documents, interroger les tables en SQL, ajouter et modifier des enregistrements, créer des tables, des colonnes et des schémas complets avec leurs relations. Fonctionne sur toute instance Grist."
+  },
+  "verbes": {
+    "exploiter": [
+      "list_organizations",
+      "describe_organization",
+      "list_workspaces",
+      "describe_workspace",
+      "list_documents",
+      "describe_document",
+      "list_tables",
+      "list_columns",
+      "list_records",
+      "get_table_schema",
+      "filter_sql_query",
+      "execute_sql_query",
+      "download_document_sqlite",
+      "download_document_excel",
+      "download_table_csv",
+      "list_attachments",
+      "get_attachment_info",
+      "download_attachment",
+      "export_schema"
+    ],
+    "creer": [
+      "create_workspace",
+      "create_document"
+    ],
+    "structurer": [
+      "create_table",
+      "modify_table",
+      "create_column",
+      "modify_column",
+      "delete_column",
+      "create_reference_column",
+      "create_schema",
+      "validate_schema"
+    ],
+    "editer": [
+      "add_grist_records",
+      "add_grist_records_safe",
+      "update_grist_records",
+      "delete_grist_records",
+      "upload_attachment",
+      "modify_organization",
+      "delete_organization",
+      "modify_workspace",
+      "delete_workspace",
+      "modify_document",
+      "delete_document",
+      "move_document",
+      "force_reload_document",
+      "delete_document_history"
+    ],
+    "configurer": [
+      "list_organization_access",
+      "modify_organization_access",
+      "list_workspace_access",
+      "modify_workspace_access",
+      "list_document_access",
+      "modify_document_access",
+      "list_webhooks",
+      "create_webhook",
+      "modify_webhook",
+      "delete_webhook",
+      "clear_webhook_queue"
+    ]
+  },
+  "ecrit": {
+    "create_workspace": "un espace de travail",
+    "create_document": "un document",
+    "create_table": "une table et ses colonnes",
+    "modify_table": "l'identifiant d'une table",
+    "create_column": "une colonne",
+    "modify_column": "une colonne",
+    "delete_column": "supprime une colonne et ses données",
+    "create_reference_column": "une colonne référence (et sa colonne inverse si demandé)",
+    "create_schema": "des tables, colonnes, références et enregistrements",
+    "add_grist_records": "des enregistrements",
+    "add_grist_records_safe": "des enregistrements",
+    "update_grist_records": "des enregistrements",
+    "delete_grist_records": "supprime des enregistrements",
+    "upload_attachment": "une pièce jointe",
+    "modify_organization": "une organisation",
+    "delete_organization": "supprime une organisation et tout son contenu",
+    "modify_workspace": "un espace de travail",
+    "delete_workspace": "supprime un espace de travail et ses documents",
+    "modify_document": "un document",
+    "delete_document": "supprime un document",
+    "move_document": "l'emplacement d'un document",
+    "force_reload_document": "recharge un document (sans modifier ses données)",
+    "delete_document_history": "supprime l'historique d'un document",
+    "modify_organization_access": "les droits d'accès d'une organisation",
+    "modify_workspace_access": "les droits d'accès d'un espace de travail",
+    "modify_document_access": "les droits d'accès d'un document",
+    "create_webhook": "un webhook",
+    "modify_webhook": "un webhook",
+    "delete_webhook": "supprime un webhook",
+    "clear_webhook_queue": "vide la file d'attente des webhooks"
+  },
+  "premier_outil": "list_organizations",
+  "prerequis": {
+    "acces_grist": "full"
+  },
+  "limites": [
+    "Chaque outil agit avec la clé API Grist configurée : il a exactement les droits de la personne qui la possède.",
+    "Les requêtes SQL sont en lecture seule (SELECT uniquement).",
+    "Les pages, vues et widgets d'un document ne se pilotent pas par ces outils.",
+    "Pas d'outil de présentation : commencer par list_organizations, puis descendre la hiérarchie organisation, espace de travail, document, table.",
+    "Les noms d'outils ne portent pas de préfixe : ils sont conservés tels quels pour ne pas casser les installations existantes.",
+    "Les exemples des commandes donnent l'entrée d'un appel minimal ; la sortie dépend du document et n'est pas reproduite."
+  ],
+  "fr": {
+    "titre_page": "mcp-server-grist — un assistant IA dans vos documents Grist",
+    "description": "Serveur MCP gratuit et open source pour Grist : un assistant IA comme Claude lit, interroge et structure vos documents Grist, sur toute instance, avec une simple clé API.",
+    "eyebrow": "Serveur MCP pour Grist",
+    "h1": "Un assistant IA qui travaille dans vos documents Grist",
+    "pitch": "mcp-server-grist relie un assistant IA (Claude, ou tout client compatible MCP) à l'API Grist. Vous lui demandez en langage courant de chercher une information, de compléter une table ou de créer une base complète avec ses relations : il le fait dans vos documents, avec vos droits.",
+    "instances": [
+      "docs.getgrist.com",
+      "grist.numerique.gouv.fr",
+      "grist.incubateur.anct.gouv.fr",
+      "Grist auto-hébergé"
+    ],
+    "boutons": {
+      "depot": "Le code",
+      "pypi": "PyPI",
+      "agents": "Pour un agent (llms.txt)",
+      "autre_langue": "English"
+    },
+    "publics_titre": "Une porte d'entrée par public",
+    "publics": [
+      {
+        "qui": "Vous utilisez un assistant IA",
+        "texte": "Cette page : installation pas à pas, exemples de demandes, ce qu'il faut savoir avant de brancher vos données."
+      },
+      {
+        "qui": "Vous développez",
+        "texte": "Le README et la référence des 54 outils, avec tous leurs paramètres.",
+        "lien": "readme_dev",
+        "libelle": "README"
+      },
+      {
+        "qui": "Vous êtes un agent IA",
+        "texte": "llms.txt, SKILL.md et la fiche de capacités : quels outils appeler, dans quel ordre, ce qu'ils écrivent.",
+        "lien_local": "llms.txt",
+        "libelle": "llms.txt"
+      }
+    ],
+    "installer_titre": "Installer en une minute",
+    "installer_intro": "Il vous faut une clé API Grist (dans Grist : Paramètres du profil → API) et l'adresse de l'API de votre instance. Le serveur est lancé par uvx, sans installation préalable.",
+    "clients": [
+      {
+        "nom": "Claude Desktop",
+        "texte": "Ajoutez ceci au fichier claude_desktop_config.json, puis redémarrez Claude.",
+        "code": "{\n  \"mcpServers\": {\n    \"grist\": {\n      \"command\": \"uvx\",\n      \"args\": [\"mcp-server-grist\"],\n      \"env\": {\n        \"GRIST_API_KEY\": \"votre_clé_api\",\n        \"GRIST_API_URL\": \"https://grist.numerique.gouv.fr/api\"\n      }\n    }\n  }\n}"
+      },
+      {
+        "nom": "Claude Code",
+        "texte": "Une commande dans le terminal.",
+        "code": "claude mcp add grist \\\n  -e GRIST_API_KEY=votre_clé_api \\\n  -e GRIST_API_URL=https://grist.numerique.gouv.fr/api \\\n  -- uvx mcp-server-grist"
+      },
+      {
+        "nom": "Autre client MCP",
+        "texte": "Commande uvx, argument mcp-server-grist, et les deux variables GRIST_API_KEY et GRIST_API_URL. Le serveur parle aussi HTTP (option --transport streamable-http).",
+        "code": "uvx mcp-server-grist"
+      },
+      {
+        "nom": "Docker",
+        "texte": "Pour un déploiement isolé.",
+        "code": "docker run -i --rm \\\n  -e GRIST_API_KEY=votre_clé_api \\\n  -e GRIST_API_URL=https://grist.numerique.gouv.fr/api \\\n  mcp/grist-mcp-server"
+      }
+    ],
+    "demandes_titre": "Ce que vous pouvez lui demander",
+    "demandes": [
+      "« Dans le document Suivi des chantiers, quels chantiers sont en retard ce mois-ci ? »",
+      "« Crée une table Projets et une table Tâches reliées entre elles, avec un statut à choix. »",
+      "« Ajoute ces trois contacts à la table Partenaires. »",
+      "« Exporte la table Inscriptions en Excel. »",
+      "« Qui a accès au document Budget, et avec quels droits ? »"
+    ],
+    "officiel_titre": "Serveur MCP officiel de Grist ou celui-ci ?",
+    "officiel_intro": "Grist Labs propose depuis juin 2026 son propre serveur MCP. Les deux se complètent :",
+    "officiel_lignes": [
+      [
+        "Où",
+        "getgrist.com, et Grist auto-hébergé en édition complète une fois activé",
+        "Toute instance Grist, avec une clé API"
+      ],
+      [
+        "Instances publiques françaises",
+        "Non activé sur grist.numerique.gouv.fr ni grist.incubateur.anct.gouv.fr (constaté le 8 novembre 2026)",
+        "Fonctionne"
+      ],
+      [
+        "Connexion",
+        "OAuth, sans installation",
+        "Clé API, lancé par uvx, pip ou Docker"
+      ],
+      [
+        "Atouts propres",
+        "Pages, vues et widgets du document",
+        "Schéma complet avec relations en un appel, SQL, droits d'accès, webhooks, exports SQLite, Excel et CSV"
+      ]
+    ],
+    "officiel_entetes": [
+      "",
+      "Serveur officiel Grist",
+      "mcp-server-grist"
+    ],
+    "outils_titre": "Les 54 outils",
+    "mot_outils": "outils",
+    "outils_intro": "Rangés par usage. La référence détaille les paramètres de chacun.",
+    "verbes_libelles": {
+      "exploiter": "Consulter et exporter",
+      "creer": "Créer",
+      "structurer": "Structurer les tables",
+      "editer": "Modifier les données et les documents",
+      "configurer": "Droits d'accès et webhooks"
+    },
+    "savoir_titre": "À savoir avant de brancher vos données",
+    "savoir": [
+      "L'assistant agit avec votre clé API : il peut faire tout ce que vous pouvez faire dans Grist, y compris supprimer. Utilisez une clé d'un compte aux droits adaptés.",
+      "Les requêtes SQL sont limitées à la lecture.",
+      "En mode HTTP, le serveur n'authentifie pas ses clients : gardez-le sur 127.0.0.1 ou derrière un proxy authentifié.",
+      "Relancer la création d'un schéma ne crée rien en double : les tables existantes ne sont pas modifiées."
+    ],
+    "lies_titre": "Projets liés",
+    "lies": [
+      {
+        "nom": "Widgets Grist",
+        "lien": "vitrine_widgets",
+        "texte": "Les widgets qui transforment un document Grist en application métier : carte, planning, formulaire, plan de charge."
+      },
+      {
+        "nom": "GristCoder",
+        "lien": "gristcoder",
+        "texte": "Un serveur MCP pour construire des widgets et des pages directement dans le document."
+      },
+      {
+        "nom": "Le fil du forum",
+        "lien": "forum",
+        "texte": "Questions, retours et annonces, sur le forum francophone de Grist."
+      },
+      {
+        "nom": "Serveur MCP officiel de Grist",
+        "lien": "mcp_officiel",
+        "texte": "La documentation du serveur de Grist Labs."
+      }
+    ],
+    "pied": "Logiciel libre sous licence MIT. Cette page est personnelle : elle n'exprime la position d'aucune organisation. mcp-server-grist n'est pas un produit de Grist Labs.",
+    "genere": "Page générée depuis le code des outils",
+    "theme_libelle": "Couleurs"
+  },
+  "en": {
+    "titre_page": "mcp-server-grist — an AI assistant in your Grist documents",
+    "description": "Free and open source MCP server for Grist: an AI assistant such as Claude reads, queries and structures your Grist documents, on any instance, with a simple API key.",
+    "eyebrow": "MCP server for Grist",
+    "h1": "An AI assistant that works in your Grist documents",
+    "pitch": "mcp-server-grist connects an AI assistant (Claude, or any MCP-compatible client) to the Grist API. Ask it in plain language to find information, fill in a table or create a complete database with its relations: it does so in your documents, with your permissions.",
+    "instances": [
+      "docs.getgrist.com",
+      "grist.numerique.gouv.fr",
+      "grist.incubateur.anct.gouv.fr",
+      "self-hosted Grist"
+    ],
+    "boutons": {
+      "depot": "Source code",
+      "pypi": "PyPI",
+      "agents": "For agents (llms.txt)",
+      "autre_langue": "Français"
+    },
+    "publics_titre": "One entry point per audience",
+    "publics": [
+      {
+        "qui": "You use an AI assistant",
+        "texte": "This page: step-by-step setup, example requests, what to know before connecting your data."
+      },
+      {
+        "qui": "You are a developer",
+        "texte": "The README and the reference of the 54 tools, with all their parameters.",
+        "lien": "readme_dev",
+        "libelle": "README"
+      },
+      {
+        "qui": "You are an AI agent",
+        "texte": "llms.txt, SKILL.md and the capability sheet: which tools to call, in which order, what they write.",
+        "lien_local": "llms.txt",
+        "libelle": "llms.txt"
+      }
+    ],
+    "installer_titre": "Set up in one minute",
+    "installer_intro": "You need a Grist API key (in Grist: Profile settings → API) and the API address of your instance. uvx runs the server, no installation needed.",
+    "clients": [
+      {
+        "nom": "Claude Desktop",
+        "texte": "Add this to claude_desktop_config.json, then restart Claude.",
+        "code": "{\n  \"mcpServers\": {\n    \"grist\": {\n      \"command\": \"uvx\",\n      \"args\": [\"mcp-server-grist\"],\n      \"env\": {\n        \"GRIST_API_KEY\": \"your_api_key\",\n        \"GRIST_API_URL\": \"https://docs.getgrist.com/api\"\n      }\n    }\n  }\n}"
+      },
+      {
+        "nom": "Claude Code",
+        "texte": "One command in the terminal.",
+        "code": "claude mcp add grist \\\n  -e GRIST_API_KEY=your_api_key \\\n  -e GRIST_API_URL=https://docs.getgrist.com/api \\\n  -- uvx mcp-server-grist"
+      },
+      {
+        "nom": "Other MCP clients",
+        "texte": "Command uvx, argument mcp-server-grist, and the two variables GRIST_API_KEY and GRIST_API_URL. The server also speaks HTTP (option --transport streamable-http).",
+        "code": "uvx mcp-server-grist"
+      },
+      {
+        "nom": "Docker",
+        "texte": "For an isolated deployment.",
+        "code": "docker run -i --rm \\\n  -e GRIST_API_KEY=your_api_key \\\n  -e GRIST_API_URL=https://docs.getgrist.com/api \\\n  mcp/grist-mcp-server"
+      }
+    ],
+    "demandes_titre": "What you can ask",
+    "demandes": [
+      "“In the Site tracking document, which sites are late this month?”",
+      "“Create a Projects table and a Tasks table linked together, with a status choice column.”",
+      "“Add these three contacts to the Partners table.”",
+      "“Export the Registrations table to Excel.”",
+      "“Who has access to the Budget document, and with which permissions?”"
+    ],
+    "officiel_titre": "Grist's official MCP server or this one?",
+    "officiel_intro": "Since June 2026, Grist Labs offers its own MCP server. The two complement each other:",
+    "officiel_lignes": [
+      [
+        "Where",
+        "getgrist.com, and self-hosted Grist full edition once enabled",
+        "Any Grist instance, with an API key"
+      ],
+      [
+        "French public instances",
+        "Not enabled on grist.numerique.gouv.fr or grist.incubateur.anct.gouv.fr (checked on 8 November 2026)",
+        "Works"
+      ],
+      [
+        "Connection",
+        "OAuth, no installation",
+        "API key, run with uvx, pip or Docker"
+      ],
+      [
+        "Specific strengths",
+        "Document pages, views and widgets",
+        "Complete schema with relations in one call, SQL, access rights, webhooks, SQLite, Excel and CSV exports"
+      ]
+    ],
+    "officiel_entetes": [
+      "",
+      "Official Grist server",
+      "mcp-server-grist"
+    ],
+    "outils_titre": "The 54 tools",
+    "mot_outils": "tools",
+    "outils_intro": "Grouped by use. The reference details the parameters of each one.",
+    "verbes_libelles": {
+      "exploiter": "Read and export",
+      "creer": "Create",
+      "structurer": "Structure tables",
+      "editer": "Edit data and documents",
+      "configurer": "Access rights and webhooks"
+    },
+    "savoir_titre": "Before connecting your data",
+    "savoir": [
+      "The assistant acts with your API key: it can do anything you can do in Grist, including deleting. Use a key from an account with suitable permissions.",
+      "SQL queries are read-only.",
+      "In HTTP mode, the server does not authenticate its clients: keep it on 127.0.0.1 or behind an authenticated proxy.",
+      "Re-running a schema creation creates nothing twice: existing tables are left untouched."
+    ],
+    "lies_titre": "Related projects",
+    "lies": [
+      {
+        "nom": "Widgets Grist",
+        "lien": "vitrine_widgets",
+        "texte": "Widgets that turn a Grist document into a business application: map, planning, form, workload (in French)."
+      },
+      {
+        "nom": "GristCoder",
+        "lien": "gristcoder",
+        "texte": "An MCP server to build widgets and pages directly in the document."
+      },
+      {
+        "nom": "Forum thread",
+        "lien": "forum",
+        "texte": "Questions, feedback and announcements, on the French-speaking Grist forum."
+      },
+      {
+        "nom": "Grist's official MCP server",
+        "lien": "mcp_officiel",
+        "texte": "Documentation of the Grist Labs server."
+      }
+    ],
+    "pied": "Free software under the MIT license. This page is personal: it does not express the position of any organization. mcp-server-grist is not a Grist Labs product.",
+    "genere": "Page generated from the tools' code",
+    "theme_libelle": "Colors"
+  }
+}

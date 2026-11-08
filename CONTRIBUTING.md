@@ -51,6 +51,16 @@ Le test `tests/test_docs.py` échoue si la référence n'est pas à jour, ou si 
 cite un outil ou un paramètre qui n'existe pas.
 Les deux README doivent rester alignés (même contenu, deux langues).
 
+Le site public et les fichiers pour agents (`site/`) sont générés de la même façon :
+après avoir modifié un outil ou le texte de la page (`docs/vitrine.json`), lancez
+
+```bash
+python scripts/generate_site.py
+```
+
+Un nouvel outil doit être rangé sous un verbe dans `docs/vitrine.json` (`verbes`), et
+`ecrit` doit dire ce qu'il écrit s'il modifie un document : le générateur refuse sinon.
+
 ## Publier une version (mainteneurs)
 
 La branche `official` est la branche de référence. Fusionner dans `official`

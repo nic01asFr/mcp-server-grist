@@ -227,6 +227,18 @@ pytest tests/
 
 La référence des outils est générée depuis le code : après avoir modifié un outil, lancez `python scripts/generate_tools_reference.py`. Voir [CONTRIBUTING.md](https://github.com/nic01asFr/mcp-server-grist/blob/official/CONTRIBUTING.md) pour la contribution et la publication, et le [CHANGELOG](https://github.com/nic01asFr/mcp-server-grist/blob/official/CHANGELOG.md) pour l'historique des versions.
 
+## Pour les agents IA
+
+Descriptions lisibles par une machine, générées depuis le code : [llms.txt](https://nic01asfr.github.io/mcp-server-grist/llms.txt), [SKILL.md](https://nic01asfr.github.io/mcp-server-grist/SKILL.md) (consignes pour un agent), [fiche-capacites.json](https://nic01asfr.github.io/mcp-server-grist/fiche-capacites.json) et [commandes.json](https://nic01asfr.github.io/mcp-server-grist/commandes.json) (fiche de capacités au format de [Widgets Grist](https://nic01asfr.github.io/Widgets-Grist/)).
+
+## Projets liés
+
+- [Site du projet](https://nic01asfr.github.io/mcp-server-grist/) : présentation et installation pas à pas (français et anglais)
+- [Widgets Grist](https://nic01asfr.github.io/Widgets-Grist/) : les widgets qui transforment un document Grist en application métier (carte, planning, formulaire, plan de charge)
+- [GristCoder](https://github.com/nic01asFr/GristCoder) : un serveur MCP pour construire des widgets et des pages directement dans le document
+- [Le fil du forum](https://forum.grist.libre.sh/t/acceder-aux-donnees-grist-via-llm-mcp-server/1211) sur le forum francophone de Grist
+- [Serveur MCP officiel de Grist](https://support.getgrist.com/mcp/) : disponible sur getgrist.com (OAuth) ; ce serveur-ci fonctionne sur toute instance avec une clé API, y compris là où l'officiel n'est pas activé
+
 ## Licence
 
 MIT

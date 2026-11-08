@@ -15,6 +15,17 @@ et ce projet adhère au [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - Corrige le lien `git clone` (pointait vers un autre dépôt), supprime les sections en
   double et le logo Grist (le projet n'est pas un produit officiel Grist).
 - `tests/test_docs.py` vérifie les deux README.
+- Site public généré (`site/`, publié sur GitHub Pages par `.github/workflows/pages.yml`) :
+  page de présentation en français et en anglais (installation par client, comparaison
+  avec le serveur MCP officiel de Grist, outils, projets liés, référencement). Deux thèmes,
+  au choix du visiteur : La Suite numérique (couleurs de grist.numerique.gouv.fr, par défaut)
+  et Grist (couleurs de getgrist.com, thème du kit Widgets-Grist), en clair et en sombre,
+  contrastes vérifiés (WCAG AA).
+- Fichiers pour agents générés depuis les outils : `llms.txt`, `SKILL.md`,
+  `fiche-capacites.json` et `commandes.json` (contrats `fiche-capacites-0.1` et
+  `commandes-0.1` de Widgets-Grist). Source éditoriale : `docs/vitrine.json` ;
+  générateur : `scripts/generate_site.py` ; garde-fous : `tests/test_site.py`.
+- README : sections « For AI agents / Pour les agents IA » et « Related projects / Projets liés ».
 
 ## [0.2.2] - 2026-11-08
 

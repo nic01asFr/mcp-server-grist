@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>mcp-server-grist — un assistant IA dans vos documents Grist</title>
+<meta name="description" content="Serveur MCP gratuit et open source pour Grist : un assistant IA comme Claude lit, interroge et structure vos documents Grist, sur toute instance, avec une simple clé API.">
+<link rel="canonical" href="https://nic01asfr.github.io/mcp-server-grist/">
+<link rel="alternate" hreflang="fr" href="https://nic01asfr.github.io/mcp-server-grist/">
+<link rel="alternate" hreflang="en" href="https://nic01asfr.github.io/mcp-server-grist/en/">
+<link rel="alternate" hreflang="x-default" href="https://nic01asfr.github.io/mcp-server-grist/">
+<link rel="alternate" type="text/plain" href="llms.txt" title="llms.txt">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="mcp-server-grist">
+<meta property="og:locale" content="fr_FR">
+<meta property="og:url" content="https://nic01asfr.github.io/mcp-server-grist/">
+<meta property="og:title" content="mcp-server-grist — un assistant IA dans vos documents Grist">
+<meta property="og:description" content="Serveur MCP gratuit et open source pour Grist : un assistant IA comme Claude lit, interroge et structure vos documents Grist, sur toute instance, avec une simple clé API.">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="mcp-server-grist — un assistant IA dans vos documents Grist">
+<meta name="twitter:description" content="Serveur MCP gratuit et open source pour Grist : un assistant IA comme Claude lit, interroge et structure vos documents Grist, sur toute instance, avec une simple clé API.">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "mcp-server-grist", "description": "Serveur MCP gratuit et open source pour Grist : un assistant IA comme Claude lit, interroge et structure vos documents Grist, sur toute instance, avec une simple clé API.", "url": "https://nic01asfr.github.io/mcp-server-grist/", "inLanguage": "fr", "applicationCategory": "DeveloperApplication", "operatingSystem": "Windows, macOS, Linux", "softwareVersion": "0.2.2", "license": "https://opensource.org/licenses/MIT", "isAccessibleForFree": true, "offers": {"@type": "Offer", "price": "0", "priceCurrency": "EUR"}, "sameAs": ["https://github.com/nic01asFr/mcp-server-grist", "https://pypi.org/project/mcp-server-grist/"]}</script>
+<style>
+:root { --fond: #FFFFFF; --surface: #FFFFFF; --surface-2: #F6F8F9; --texte: #222631; --texte-2: #555E74; --bord: #CFD5DE; --accent: #3E5DE7; --bouton: #3E5DE7; --bouton-texte: #FFFFFF; }
+@media (prefers-color-scheme: dark) { :root { --fond: #181B24; --surface: #222631; --surface-2: #222631; --texte: #EEF1F4; --texte-2: #DFE2EA; --bord: #4A5267; --accent: #A2B6FF; --bouton: #2845C1; --bouton-texte: #EDF0FF; } }
+:root[data-theme="grist"] { --fond: #FFFFFF; --surface: #FFFFFF; --surface-2: #DCF4EB; --texte: #262633; --texte-2: #494949; --bord: #D9D9D9; --accent: #017C51; --bouton: #16B378; --bouton-texte: #000000; }
+@media (prefers-color-scheme: dark) { :root[data-theme="grist"] { --fond: #161616; --surface: #1E1E1E; --surface-2: #102D1F; --texte: #F0F0F0; --texte-2: #CECECE; --bord: #353535; --accent: #16B378; --bouton: #16B378; --bouton-texte: #1E1E1E; } }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--fond); color: var(--texte);
+  font: 16px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif; -webkit-font-smoothing: antialiased; }
+a { color: var(--accent); }
+.bouton.creux, h3 a { color: var(--texte); }
+main { max-width: 60rem; margin: 0 auto; padding: 4rem 1.5rem 6rem; }
+h1, h2, h3 { font-weight: 600; line-height: 1.15; text-wrap: balance; margin: 0; }
+h1 { font-size: clamp(2.2rem, 6vw, 3.4rem); letter-spacing: -.01em; }
+h2 { font-size: 1.5rem; margin-bottom: 1rem; }
+h3 { font-size: 1.1rem; margin-bottom: .5rem; }
+p { margin: 0 0 1rem; color: var(--texte-2); }
+section { margin-top: 4rem; }
+.eyebrow { font-size: .78rem; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); font-weight: 600; margin-bottom: 1.4rem; }
+.pitch { font-size: 1.15rem; max-width: 42rem; margin-top: 1.2rem; }
+.tags { display: flex; flex-wrap: wrap; gap: .4rem; margin: 1rem 0; }
+.tag { font-size: .78rem; padding: .2rem .6rem; border-radius: 999px; border: 1px solid var(--bord); color: var(--texte-2); }
+.faits { display: flex; flex-wrap: wrap; gap: 1.4rem; font-size: .88rem; color: var(--texte-2); margin: 1.4rem 0; }
+.faits b { color: var(--texte); font-weight: 600; }
+.boutons { display: flex; flex-wrap: wrap; gap: .6rem; margin-top: 1.4rem; }
+.bouton { display: inline-block; padding: .55rem 1rem; border-radius: 6px; text-decoration: none; font-size: .92rem;
+  background: var(--bouton); color: var(--bouton-texte); font-weight: 600; }
+.bouton.creux { background: transparent; color: var(--texte); border: 1px solid var(--bord); }
+.themes { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem; margin-top: 1rem; font-size: .82rem; color: var(--texte-2); }
+.themes[hidden] { display: none; }
+.themes button { font: inherit; padding: .2rem .7rem; border-radius: 999px; border: 1px solid var(--bord);
+  background: transparent; color: var(--texte); cursor: pointer; }
+.themes button[aria-pressed="true"] { background: var(--bouton); color: var(--bouton-texte); border-color: var(--bouton); }
+.grille { display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: 1rem; }
+.carte { background: var(--surface); border: 1px solid var(--bord); border-radius: 8px; padding: 1.2rem; }
+.carte p { margin: 0; }
+pre { background: var(--surface-2); border: 1px solid var(--bord); border-radius: 6px; padding: .9rem 1rem;
+  overflow-x: auto; font-size: .82rem; line-height: 1.5; }
+code { font-family: ui-monospace, "SFMono-Regular", Menlo, monospace; font-size: .85em; }
+p code, li code, td code { background: var(--surface); border: 1px solid var(--bord); border-radius: 4px; padding: .1rem .35rem; }
+.tableau { overflow-x: auto; }
+.grille > *, main > section > div { min-width: 0; }
+pre { max-width: 100%; }
+table { width: 100%; border-collapse: collapse; font-size: .92rem; }
+th, td { text-align: left; vertical-align: top; padding: .6rem .5rem; border-bottom: 1px solid var(--bord); }
+th { font-weight: 600; }
+td { color: var(--texte-2); }
+td:first-child { color: var(--texte); font-weight: 600; }
+ul.outils { list-style: none; padding: 0; margin: 0 0 1.6rem; columns: 2 18rem; column-gap: 2rem; }
+ul.outils li { break-inside: avoid; margin-bottom: .6rem; color: var(--texte-2); font-size: .92rem; }
+ul.outils li code { color: var(--texte); }
+ul.liste li { color: var(--texte-2); margin-bottom: .5rem; }
+.pied { max-width: 60rem; margin: 0 auto; padding: 2rem 1.5rem 4rem; border-top: 1px solid var(--bord);
+  font-size: .85rem; color: var(--texte-2); }
+</style>
+<script>(function () { try { var t = localStorage.getItem('mcp-server-grist-theme'); if (["grist", "suite"].indexOf(t) >= 0 && t !== 'suite') document.documentElement.setAttribute('data-theme', t); } catch (e) {} })();</script>
+</head>
+<body>
+<main>
+<p class="eyebrow">Serveur MCP pour Grist</p>
+<h1>Un assistant IA qui travaille dans vos documents Grist</h1>
+<p class="pitch">mcp-server-grist relie un assistant IA (Claude, ou tout client compatible MCP) à l&#x27;API Grist. Vous lui demandez en langage courant de chercher une information, de compléter une table ou de créer une base complète avec ses relations : il le fait dans vos documents, avec vos droits.</p>
+<div class="tags"><span class="tag">docs.getgrist.com</span><span class="tag">grist.numerique.gouv.fr</span><span class="tag">grist.incubateur.anct.gouv.fr</span><span class="tag">Grist auto-hébergé</span></div>
+<p class="faits"><span><b>v0.2.2</b></span><span><b>54</b> outils</span><span>Python 3.10+</span><span>MIT</span></p>
+<div class="boutons">
+<a class="bouton" href="#installer">Installer en une minute</a>
+<a class="bouton creux" href="https://github.com/nic01asFr/mcp-server-grist">Le code</a>
+<a class="bouton creux" href="https://pypi.org/project/mcp-server-grist/">PyPI</a>
+<a class="bouton creux" href="llms.txt">Pour un agent (llms.txt)</a>
+<a class="bouton creux" href="https://nic01asfr.github.io/mcp-server-grist/en/" hreflang="en">English</a>
+</div>
+<div class="themes" id="themes" hidden role="group" aria-label="Couleurs"><span>Couleurs :</span><button type="button" data-choix="suite" aria-pressed="true">La Suite numérique</button><button type="button" data-choix="grist" aria-pressed="false">Grist</button></div>
+<script>(function () { var d = document.documentElement, defaut = 'suite', zone = document.getElementById('themes'); zone.hidden = false; function maj() { var actif = d.getAttribute('data-theme') || defaut; zone.querySelectorAll('button').forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.choix === actif)); }); } zone.addEventListener('click', function (ev) { var b = ev.target.closest('button'); if (!b) return; var c = b.dataset.choix; if (c === defaut) d.removeAttribute('data-theme'); else d.setAttribute('data-theme', c); try { localStorage.setItem('mcp-server-grist-theme', c); } catch (e) {} maj(); }); maj(); })();</script>
+
+<section>
+<h2>Une porte d&#x27;entrée par public</h2>
+<div class="grille">
+<div class="carte"><h3>Vous utilisez un assistant IA</h3><p>Cette page : installation pas à pas, exemples de demandes, ce qu&#x27;il faut savoir avant de brancher vos données.</p></div>
+<div class="carte"><h3>Vous développez</h3><p>Le README et la référence des 54 outils, avec tous leurs paramètres.</p><p><a href="https://github.com/nic01asFr/mcp-server-grist/blob/official/README.md">README</a></p></div>
+<div class="carte"><h3>Vous êtes un agent IA</h3><p>llms.txt, SKILL.md et la fiche de capacités : quels outils appeler, dans quel ordre, ce qu&#x27;ils écrivent.</p><p><a href="llms.txt">llms.txt</a></p></div>
+</div>
+</section>
+
+<section id="installer">
+<h2>Installer en une minute</h2>
+<p>Il vous faut une clé API Grist (dans Grist : Paramètres du profil → API) et l&#x27;adresse de l&#x27;API de votre instance. Le serveur est lancé par uvx, sans installation préalable.</p>
+<div><h3>Claude Desktop</h3><p>Ajoutez ceci au fichier claude_desktop_config.json, puis redémarrez Claude.</p><pre><code>{
+  &quot;mcpServers&quot;: {
+    &quot;grist&quot;: {
+      &quot;command&quot;: &quot;uvx&quot;,
+      &quot;args&quot;: [&quot;mcp-server-grist&quot;],
+      &quot;env&quot;: {
+        &quot;GRIST_API_KEY&quot;: &quot;votre_clé_api&quot;,
+        &quot;GRIST_API_URL&quot;: &quot;https://grist.numerique.gouv.fr/api&quot;
+      }
+    }
+  }
+}</code></pre></div>
+<div><h3>Claude Code</h3><p>Une commande dans le terminal.</p><pre><code>claude mcp add grist \
+  -e GRIST_API_KEY=votre_clé_api \
+  -e GRIST_API_URL=https://grist.numerique.gouv.fr/api \
+  -- uvx mcp-server-grist</code></pre></div>
+<div><h3>Autre client MCP</h3><p>Commande uvx, argument mcp-server-grist, et les deux variables GRIST_API_KEY et GRIST_API_URL. Le serveur parle aussi HTTP (option --transport streamable-http).</p><pre><code>uvx mcp-server-grist</code></pre></div>
+<div><h3>Docker</h3><p>Pour un déploiement isolé.</p><pre><code>docker run -i --rm \
+  -e GRIST_API_KEY=votre_clé_api \
+  -e GRIST_API_URL=https://grist.numerique.gouv.fr/api \
+  mcp/grist-mcp-server</code></pre></div>
+</section>
+
+<section>
+<h2>Ce que vous pouvez lui demander</h2>
+<ul class="liste">
+<li>« Dans le document Suivi des chantiers, quels chantiers sont en retard ce mois-ci ? »</li><li>« Crée une table Projets et une table Tâches reliées entre elles, avec un statut à choix. »</li><li>« Ajoute ces trois contacts à la table Partenaires. »</li><li>« Exporte la table Inscriptions en Excel. »</li><li>« Qui a accès au document Budget, et avec quels droits ? »</li>
+</ul>
+</section>
+
+<section>
+<h2>Serveur MCP officiel de Grist ou celui-ci ?</h2>
+<p>Grist Labs propose depuis juin 2026 son propre serveur MCP. Les deux se complètent :</p>
+<div class="tableau"><table>
+<thead><tr><th></th><th>Serveur officiel Grist</th><th>mcp-server-grist</th></tr></thead>
+<tbody>
+<tr><td>Où</td><td>getgrist.com, et Grist auto-hébergé en édition complète une fois activé</td><td>Toute instance Grist, avec une clé API</td></tr>
+<tr><td>Instances publiques françaises</td><td>Non activé sur grist.numerique.gouv.fr ni grist.incubateur.anct.gouv.fr (constaté le 8 novembre 2026)</td><td>Fonctionne</td></tr>
+<tr><td>Connexion</td><td>OAuth, sans installation</td><td>Clé API, lancé par uvx, pip ou Docker</td></tr>
+<tr><td>Atouts propres</td><td>Pages, vues et widgets du document</td><td>Schéma complet avec relations en un appel, SQL, droits d&#x27;accès, webhooks, exports SQLite, Excel et CSV</td></tr>
+</tbody>
+</table></div>
+</section>
+
+<section>
+<h2>Les 54 outils</h2>
+<p>Rangés par usage. La référence détaille les paramètres de chacun. <a href="https://github.com/nic01asFr/mcp-server-grist/blob/official/docs/tools-reference.mdx">tools-reference.mdx</a></p>
+<h3>Consulter et exporter</h3>
+<ul class="outils">
+<li><code>list_organizations</code> Liste toutes les organisations Grist accessibles.</li>
+<li><code>describe_organization</code> Obtient des informations détaillées sur une organisation spécifique.</li>
+<li><code>list_workspaces</code> Liste tous les espaces de travail dans une organisation Grist.</li>
+<li><code>describe_workspace</code> Obtient des informations détaillées sur un espace de travail spécifique.</li>
+<li><code>list_documents</code> Liste tous les documents dans un espace de travail Grist.</li>
+<li><code>describe_document</code> Obtient des informations détaillées sur un document spécifique.</li>
+<li><code>list_tables</code> Liste toutes les tables dans un document Grist.</li>
+<li><code>list_columns</code> Liste toutes les colonnes dans une table Grist.</li>
+<li><code>list_records</code> Liste les enregistrements dans une table Grist avec tri et limitation optionnels.</li>
+<li><code>get_table_schema</code> Obtient le schéma détaillé d&#x27;une table Grist.</li>
+<li><code>filter_sql_query</code> Exécute une requête SQL de filtrage sur une table Grist.</li>
+<li><code>execute_sql_query</code> Exécute une requête SQL personnalisée sur un document Grist.</li>
+<li><code>download_document_sqlite</code> Télécharge un document Grist au format SQLite.</li>
+<li><code>download_document_excel</code> Télécharge un document Grist au format Excel.</li>
+<li><code>download_table_csv</code> Télécharge une table Grist au format CSV.</li>
+<li><code>list_attachments</code> Liste les pièces jointes d&#x27;un document Grist.</li>
+<li><code>get_attachment_info</code> Obtient les métadonnées d&#x27;une pièce jointe.</li>
+<li><code>download_attachment</code> Télécharge le contenu d&#x27;une pièce jointe.</li>
+<li><code>export_schema</code> Exporte le schéma d&#x27;un document existant.</li>
+</ul>
+<h3>Structurer les tables</h3>
+<ul class="outils">
+<li><code>create_table</code> Crée une nouvelle table dans un document.</li>
+<li><code>modify_table</code> Modifie les propriétés d&#x27;une table.</li>
+<li><code>create_column</code> Crée une nouvelle colonne dans une table.</li>
+<li><code>modify_column</code> Modifie les propriétés d&#x27;une colonne.</li>
+<li><code>delete_column</code> Supprime une colonne d&#x27;une table.</li>
+<li><code>create_reference_column</code> Crée une colonne de référence qui affiche la colonne choisie de la table cible.</li>
+<li><code>validate_schema</code> Valide un schéma sans le créer.</li>
+<li><code>create_schema</code> Crée un schéma complet avec tables, colonnes et relations.</li>
+</ul>
+<h3>Modifier les données et les documents</h3>
+<ul class="outils">
+<li><code>add_grist_records</code> Ajoute des enregistrements à une table Grist.</li>
+<li><code>add_grist_records_safe</code> Ajoute des enregistrements avec validation préalable de la structure.</li>
+<li><code>update_grist_records</code> Met à jour des enregistrements existants dans une table Grist.</li>
+<li><code>delete_grist_records</code> Supprime des enregistrements d&#x27;une table Grist.</li>
+<li><code>modify_organization</code> Modifie les propriétés d&#x27;une organisation.</li>
+<li><code>delete_organization</code> Supprime une organisation.</li>
+<li><code>modify_workspace</code> Modifie les propriétés d&#x27;un espace de travail.</li>
+<li><code>delete_workspace</code> Supprime un espace de travail.</li>
+<li><code>modify_document</code> Modifie les propriétés d&#x27;un document.</li>
+<li><code>delete_document</code> Supprime un document.</li>
+<li><code>move_document</code> Déplace un document vers un autre espace de travail.</li>
+<li><code>force_reload_document</code> Force le rechargement d&#x27;un document.</li>
+<li><code>delete_document_history</code> Supprime l&#x27;historique d&#x27;un document, ne conservant que les dernières actions.</li>
+<li><code>upload_attachment</code> Téléverse une pièce jointe dans un document Grist.</li>
+</ul>
+<h3>Créer</h3>
+<ul class="outils">
+<li><code>create_workspace</code> Crée un nouvel espace de travail dans une organisation.</li>
+<li><code>create_document</code> Crée un nouveau document dans un espace de travail.</li>
+</ul>
+<h3>Droits d&#x27;accès et webhooks</h3>
+<ul class="outils">
+<li><code>list_organization_access</code> Liste les utilisateurs ayant accès à une organisation.</li>
+<li><code>modify_organization_access</code> Modifie l&#x27;accès d&#x27;un utilisateur à une organisation.</li>
+<li><code>list_workspace_access</code> Liste les utilisateurs ayant accès à un espace de travail.</li>
+<li><code>modify_workspace_access</code> Modifie l&#x27;accès d&#x27;un utilisateur à un espace de travail.</li>
+<li><code>list_document_access</code> Liste les utilisateurs ayant accès à un document.</li>
+<li><code>modify_document_access</code> Modifie l&#x27;accès d&#x27;un utilisateur à un document.</li>
+<li><code>list_webhooks</code> Liste les webhooks d&#x27;un document Grist.</li>
+<li><code>create_webhook</code> Crée un webhook pour un document Grist.</li>
+<li><code>modify_webhook</code> Modifie un webhook existant.</li>
+<li><code>delete_webhook</code> Supprime un webhook.</li>
+<li><code>clear_webhook_queue</code> Vide la file d&#x27;attente des webhooks pour un document.</li>
+</ul>
+</section>
+
+<section>
+<h2>À savoir avant de brancher vos données</h2>
+<ul class="liste">
+<li>L&#x27;assistant agit avec votre clé API : il peut faire tout ce que vous pouvez faire dans Grist, y compris supprimer. Utilisez une clé d&#x27;un compte aux droits adaptés.</li><li>Les requêtes SQL sont limitées à la lecture.</li><li>En mode HTTP, le serveur n&#x27;authentifie pas ses clients : gardez-le sur 127.0.0.1 ou derrière un proxy authentifié.</li><li>Relancer la création d&#x27;un schéma ne crée rien en double : les tables existantes ne sont pas modifiées.</li>
+</ul>
+</section>
+
+<section>
+<h2>Projets liés</h2>
+<div class="grille">
+<div class="carte"><h3><a href="https://nic01asfr.github.io/Widgets-Grist/">Widgets Grist</a></h3><p>Les widgets qui transforment un document Grist en application métier : carte, planning, formulaire, plan de charge.</p></div>
+<div class="carte"><h3><a href="https://github.com/nic01asFr/GristCoder">GristCoder</a></h3><p>Un serveur MCP pour construire des widgets et des pages directement dans le document.</p></div>
+<div class="carte"><h3><a href="https://forum.grist.libre.sh/t/acceder-aux-donnees-grist-via-llm-mcp-server/1211">Le fil du forum</a></h3><p>Questions, retours et annonces, sur le forum francophone de Grist.</p></div>
+<div class="carte"><h3><a href="https://support.getgrist.com/mcp/">Serveur MCP officiel de Grist</a></h3><p>La documentation du serveur de Grist Labs.</p></div>
+</div>
+</section>
+</main>
+<footer class="pied">
+<p>Logiciel libre sous licence MIT. Cette page est personnelle : elle n&#x27;exprime la position d&#x27;aucune organisation. mcp-server-grist n&#x27;est pas un produit de Grist Labs.</p>
+<p><a href="https://github.com/nic01asFr/mcp-server-grist">GitHub</a> · <a href="https://pypi.org/project/mcp-server-grist/">PyPI</a> · <a href="llms.txt">llms.txt</a> · <a href="SKILL.md">SKILL.md</a> · <a href="fiche-capacites.json">fiche-capacites.json</a> — Page générée depuis le code des outils, v0.2.2.</p>
+</footer>
+</body>
+</html>
