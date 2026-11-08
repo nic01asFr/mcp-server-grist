@@ -1,0 +1,62 @@
+# Publie site/ (page publique, llms.txt, SKILL.md, fiche de capacités) sur GitHub Pages.
+#
+# site/ est généré par scripts/generate_site.py depuis le code des outils et
+# docs/vitrine.json ; ce workflow vérifie qu'il est à jour avant de le publier.
+# Prérequis (une fois) : Settings → Pages → Source : « GitHub Actions ».
+
+name: Publish site to GitHub Pages
+
+on:
+  push:
+    branches: [ official ]
+    paths:
+      - 'site/**'
+      - 'docs/vitrine.json'
+      - 'scripts/generate_site.py'
+      - 'src/mcp_server_grist/**'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v6
+
+    - name: Set up Python
+      uses: actions/setup-python@v6
+      with:
+        python-version: '3.12'
+
+    - name: Vérifier que site/ est à jour
+      run: |
+        python -m pip install --upgrade pip
+        python -m pip install -e .
+        python scripts/generate_site.py --check
+
+    - uses: actions/configure-pages@v5
+
+    - uses: actions/upload-pages-artifact@v4
+      with:
+        path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+    - name: Deploy to GitHub Pages
+      id: deployment
+      uses: actions/deploy-pages@v4

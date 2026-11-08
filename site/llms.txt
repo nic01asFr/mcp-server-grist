@@ -1,0 +1,90 @@
+# mcp-server-grist
+
+> Serveur MCP qui donne à un assistant IA l'accès à l'API Grist avec une simple clé API : parcourir les documents, interroger les tables en SQL, ajouter et modifier des enregistrements, créer des tables, des colonnes et des schémas complets avec leurs relations. Fonctionne sur toute instance Grist.
+
+Version 0.2.2. Fiche de capacités : fiche-capacites.json (contrat fiche-capacites-0.1).
+
+## Comment appeler ces outils
+
+- Serveur MCP (stdio) : `uvx mcp-server-grist`, ou `pip install mcp-server-grist` puis `mcp-server-grist`.
+- Serveur MCP (HTTP) : `mcp-server-grist --transport streamable-http --port 8000` (point d’accès /mcp).
+- Configuration : `GRIST_API_KEY` (obligatoire) et `GRIST_API_URL` (ex. https://grist.numerique.gouv.fr/api).
+- Premier outil à appeler : `list_organizations`.
+
+## Outils
+
+- `list_organizations` (exploiter) : Liste toutes les organisations Grist accessibles.
+- `describe_organization` (exploiter) : Obtient des informations détaillées sur une organisation spécifique.
+- `list_workspaces` (exploiter) : Liste tous les espaces de travail dans une organisation Grist.
+- `describe_workspace` (exploiter) : Obtient des informations détaillées sur un espace de travail spécifique.
+- `list_documents` (exploiter) : Liste tous les documents dans un espace de travail Grist.
+- `describe_document` (exploiter) : Obtient des informations détaillées sur un document spécifique.
+- `list_tables` (exploiter) : Liste toutes les tables dans un document Grist.
+- `list_columns` (exploiter) : Liste toutes les colonnes dans une table Grist.
+- `list_records` (exploiter) : Liste les enregistrements dans une table Grist avec tri et limitation optionnels.
+- `get_table_schema` (exploiter) : Obtient le schéma détaillé d'une table Grist.
+- `add_grist_records` (editer) : Ajoute des enregistrements à une table Grist.
+- `add_grist_records_safe` (editer) : Ajoute des enregistrements avec validation préalable de la structure.
+- `update_grist_records` (editer) : Met à jour des enregistrements existants dans une table Grist.
+- `delete_grist_records` (editer) : Supprime des enregistrements d'une table Grist.
+- `filter_sql_query` (exploiter) : Exécute une requête SQL de filtrage sur une table Grist.
+- `execute_sql_query` (exploiter) : Exécute une requête SQL personnalisée sur un document Grist.
+- `modify_organization` (editer) : Modifie les propriétés d'une organisation.
+- `delete_organization` (editer) : Supprime une organisation.
+- `create_workspace` (creer) : Crée un nouvel espace de travail dans une organisation.
+- `modify_workspace` (editer) : Modifie les propriétés d'un espace de travail.
+- `delete_workspace` (editer) : Supprime un espace de travail.
+- `create_document` (creer) : Crée un nouveau document dans un espace de travail.
+- `modify_document` (editer) : Modifie les propriétés d'un document.
+- `delete_document` (editer) : Supprime un document.
+- `move_document` (editer) : Déplace un document vers un autre espace de travail.
+- `force_reload_document` (editer) : Force le rechargement d'un document.
+- `delete_document_history` (editer) : Supprime l'historique d'un document, ne conservant que les dernières actions.
+- `create_table` (structurer) : Crée une nouvelle table dans un document.
+- `modify_table` (structurer) : Modifie les propriétés d'une table.
+- `create_column` (structurer) : Crée une nouvelle colonne dans une table.
+- `modify_column` (structurer) : Modifie les propriétés d'une colonne.
+- `delete_column` (structurer) : Supprime une colonne d'une table.
+- `list_organization_access` (configurer) : Liste les utilisateurs ayant accès à une organisation.
+- `modify_organization_access` (configurer) : Modifie l'accès d'un utilisateur à une organisation.
+- `list_workspace_access` (configurer) : Liste les utilisateurs ayant accès à un espace de travail.
+- `modify_workspace_access` (configurer) : Modifie l'accès d'un utilisateur à un espace de travail.
+- `list_document_access` (configurer) : Liste les utilisateurs ayant accès à un document.
+- `modify_document_access` (configurer) : Modifie l'accès d'un utilisateur à un document.
+- `download_document_sqlite` (exploiter) : Télécharge un document Grist au format SQLite.
+- `download_document_excel` (exploiter) : Télécharge un document Grist au format Excel.
+- `download_table_csv` (exploiter) : Télécharge une table Grist au format CSV.
+- `list_attachments` (exploiter) : Liste les pièces jointes d'un document Grist.
+- `get_attachment_info` (exploiter) : Obtient les métadonnées d'une pièce jointe.
+- `download_attachment` (exploiter) : Télécharge le contenu d'une pièce jointe.
+- `upload_attachment` (editer) : Téléverse une pièce jointe dans un document Grist.
+- `list_webhooks` (configurer) : Liste les webhooks d'un document Grist.
+- `create_webhook` (configurer) : Crée un webhook pour un document Grist.
+- `modify_webhook` (configurer) : Modifie un webhook existant.
+- `delete_webhook` (configurer) : Supprime un webhook.
+- `clear_webhook_queue` (configurer) : Vide la file d'attente des webhooks pour un document.
+- `create_reference_column` (structurer) : Crée une colonne de référence qui affiche la colonne choisie de la table cible.
+- `validate_schema` (structurer) : Valide un schéma sans le créer.
+- `create_schema` (structurer) : Crée un schéma complet avec tables, colonnes et relations.
+- `export_schema` (exploiter) : Exporte le schéma d'un document existant.
+
+## Ce qui n’est pas couvert
+
+Verbes sans outil : presenter, personnaliser, publier, recolter, traiter.
+
+## Limites
+
+- Chaque outil agit avec la clé API Grist configurée : il a exactement les droits de la personne qui la possède.
+- Les requêtes SQL sont en lecture seule (SELECT uniquement).
+- Les pages, vues et widgets d'un document ne se pilotent pas par ces outils.
+- Pas d'outil de présentation : commencer par list_organizations, puis descendre la hiérarchie organisation, espace de travail, document, table.
+- Les noms d'outils ne portent pas de préfixe : ils sont conservés tels quels pour ne pas casser les installations existantes.
+- Les exemples des commandes donnent l'entrée d'un appel minimal ; la sortie dépend du document et n'est pas reproduite.
+
+## Pour aller plus loin
+
+- [Page de présentation](https://nic01asfr.github.io/mcp-server-grist/)
+- [Consignes pour un agent (SKILL.md)](https://nic01asfr.github.io/mcp-server-grist/SKILL.md)
+- [Fiche de capacités](https://nic01asfr.github.io/mcp-server-grist/fiche-capacites.json) et [commandes](https://nic01asfr.github.io/mcp-server-grist/commandes.json)
+- [Référence des outils](https://github.com/nic01asFr/mcp-server-grist/blob/official/docs/tools-reference.mdx)
+- [Code source](https://github.com/nic01asFr/mcp-server-grist)

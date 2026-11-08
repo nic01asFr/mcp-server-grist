@@ -1,0 +1,2241 @@
+{
+  "contrat": "commandes-0.1",
+  "widget": "mcp-server-grist",
+  "version": "0.2.2",
+  "commandes": [
+    {
+      "nom": "list_organizations",
+      "verbe": "exploiter",
+      "description": "Liste toutes les organisations Grist accessibles.",
+      "entree": {
+        "type": "object",
+        "properties": {}
+      },
+      "sortie": {
+        "type": "object"
+      },
+      "nature": "pure",
+      "ecrit": "rien",
+      "exemples": [
+        {
+          "titre": "Appel minimal",
+          "entree": {}
+        }
+      ]
+    },
+    {
+      "nom": "describe_organization",
+      "verbe": "exploiter",
+      "description": "Obtient des informations détaillées sur une organisation spécifique.",
+      "entree": {
+        "type": "object",
+        "properties": {
+          "org_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "L'ID de l'organisation à décrire"
+          }
+        },
+        "required": [
+          "org_id"
+        ]
+      },
+      "sortie": {
+        "type": "object"
+      },
+      "nature": "pure",
+      "ecrit": "rien",
+      "exemples": [
+        {
+          "titre": "Appel minimal",
+          "entree": {
+            "org_id": 2
+          }
+        }
+      ]
+    },
+    {
+      "nom": "list_workspaces",
+      "verbe": "exploiter",
+      "description": "Liste tous les espaces de travail dans une organisation Grist.",
+      "entree": {
+        "type": "object",
+        "properties": {
+          "org_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "L'ID de l'organisation (entier ou sous-domaine string)"
+          }
+        },
+        "required": [
+          "org_id"
+        ]
+      },
+      "sortie": {
+        "type": "object"
+      },
+      "nature": "pure",
+      "ecrit": "rien",
+      "exemples": [
+        {
+          "titre": "Appel minimal",
+          "entree": {
+            "org_id": 2
+          }
+        }
+      ]
+    },
+    {
+      "nom": "describe_workspace",
+      "verbe": "exploiter",
+      "description": "Obtient des informations détaillées sur un espace de travail spécifique.",
+      "entree": {
+        "type": "object",
+        "properties": {
+          "workspace_id": {
+            "type": "integer",
+            "description": "L'ID de l'espace de travail à décrire"
+          }
+        },
+        "required": [
+          "workspace_id"
+        ]
+      },
+      "sortie": {
+        "type": "object"
+      },
+      "nature": "pure",
+      "ecrit": "rien",
+      "exemples": [
+        {
+          "titre": "Appel minimal",
+          "entree": {
+            "workspace_id": 3
+          }
+        }
+      ]
+    },
+    {
+      "nom": "list_documents",
+      "verbe": "exploiter",
+      "description": "Liste tous les documents dans un espace de travail Grist.",
+      "entree": {
+        "type": "object",
+        "properties": {
+          "workspace_id": {
+            "type": "integer",
+            "description": "L'ID de l'espace de travail"
+          }
+        },
+        "required": [
+          "workspace_id"
+        ]
+      },
+      "sortie": {
+        "type": "object"
+      },
+      "nature": "pure",
+      "ecrit": "rien",
+      "exemples": [
+        {
+          "titre": "Appel minimal",
+          "entree": {
+            "workspace_id": 3
+          }
+        }
+      ]
+    },
+    {
+      "nom": "describe_document",
+      "verbe": "exploiter",
+      "description": "Obtient des informations détaillées sur un document spécifique.",
+      "entree": {
+        "type": "object",
+        "properties": {
+          "doc_id": {
+            "type": "string",
+            "description": "L'ID du document à décrire"
+          }
+        },
+        "required": [
+          "doc_id"
+        ]
+      },
+      "sortie": {
+        "type": "object"
+      },
+      "nature": "pure",
+      "ecrit": "rien",
+      "exemples": [
+        {
+          "titre": "Appel minimal",
+          "entree": {
+            "doc_id": "abc123"
+          }
+        }
+      ]
+    },
+    {
+      "nom": "list_tables",
+      "verbe": "exploiter",
+      "description": "Liste toutes les tables dans un document Grist.",
+      "entree": {
+        "type": "object",
+        "properties": {
+          "doc_id": {
+            "type": "string",
+            "description": "L'ID du document"
+          }
+        },
+        "required": [
+          "doc_id"
+        ]
+      },
+      "sortie": {
+        "type": "object"
+      },
+      "nature": "pure",
+      "ecrit": "rien",
+      "exemples": [
+        {
+          "titre": "Appel minimal",
+          "entree": {
+            "doc_id": "abc123"
+          }
+        }
+      ]
+    },
+    {
+      "nom": "list_columns",
+      "verbe": "exploiter",
+      "description": "Liste toutes les colonnes dans une table Grist.",
+      "entree": {
+        "type": "object",
+        "properties": {
+          "doc_id": {
+            "type": "string",
+            "description": "L'ID du document"
+          },
+          "table_id": {
+            "type": "string",
+            "description": "L'ID de la table"
+          }
+        },
+        "required": [
+          "doc_id",
+          "table_id"
+        ]
+      },
+      "sortie": {
+        "type": "object"
+      },
+      "nature": "pure",
+      "ecrit": "rien",
+      "exemples": [
+        {
+          "titre": "Appel minimal",
+          "entree": {
+            "doc_id": "abc123",
+            "table_id": "Taches"
+          }
+        }
+      ]
+    },
+    {
+      "nom": "list_records",
+      "verbe": "exploiter",
+      "description": "Liste les enregistrements dans une table Grist avec tri et limitation optionnels.",
+      "entree": {
+        "type": "object",
+        "properties": {
+          "doc_id": {
+            "type": "string",
+            "description": "L'ID du document Grist"
+          },
+          "table_id": {
+            "type": "string",
+            "description": "L'ID de la table"
+          },
+          "sort": {
+            "type": "string",
+            "description": "Colonne de tri (optionnel, format: \"colonne\" ou \"colonne:asc/desc\")"
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Nombre maximum d'enregistrements à retourner (optionnel)"
+          }
+        },
+        "required": [
+          "doc_id",
+          "table_id"
+        ]
+      },
+      "sortie": {
+        "type": "object"
+      },
+      "nature": "pure",
+      "ecrit": "rien",
+      "exemples": [
+        {
+          "titre": "Appel minimal",
+          "entree": {
+            "doc_id": "abc123",
+            "table_id": "Taches"
+          }
+        }
+      ]
+    },
+    {
+      "nom": "get_table_schema",
+      "verbe": "exploiter",
+      "description": "Obtient le schéma détaillé d'une table Grist.",
+      "entree": {
+        "type": "object",
+        "properties": {
+          "doc_id": {
+            "type": "string",
+            "description": "L'ID du document"
+          },
+          "table_id": {
+            "type": "string",
+            "description": "L'ID de la table"
+          }
+        },
+        "required": [
+          "doc_id",
+          "table_id"
+        ]
+      },
+      "sortie": {
+        "type": "object"
+      },
+      "nature": "pure",
+      "ecrit": "rien",
+      "exemples": [
+        {
+          "titre": "Appel minimal",
+          "entree": {
+            "doc_id": "abc123",
+            "table_id": "Taches"
+          }
+        }
+      ]
+    },
+    {
+      "nom": "add_grist_records",
+      "verbe": "editer",
+      "description": "Ajoute des enregistrements à une table Grist.",
+      "entree": {
+        "type": "object",
+        "properties": {
+          "doc_id": {
+            "type": "string",
+            "description": "L'ID du document Grist"
+          },
+          "table_id": {
+            "type": "string",
+            "description": "L'ID de la table"
+          },
+          "records": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            },
+            "description": "Liste des enregistrements à ajouter. Chaque enregistrement est un dictionnaire où les clés sont les noms des colonnes et les valeurs sont les données. Exemple: [{\"nom\": \"Dupont\", \"prénom\": \"Jean\", \"âge\": 35}]"
+          }
+        },
+        "required": [
+          "doc_id",
+          "table_id",
+          "records"
+        ]
+      },
+      "sortie": {
+        "type": "object"
+      },
+      "nature": "pure",
+      "ecrit": "des enregistrements",
+      "exemples": [
+        {
+          "titre": "Appel minimal",
+          "entree": {
+            "doc_id": "abc123",
+            "table_id": "Taches",
+            "records": [
+              {
+                "titre": "Rédiger la doc",
+                "statut": "ouvert"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "nom": "add_grist_records_safe",
+      "verbe": "editer",
+      "description": "Ajoute des enregistrements avec validation préalable de la structure.",
+      "entree": {
+        "type": "object",
+        "properties": {
+          "doc_id": {
+            "type": "string",
+            "description": "L'ID du document"
+          },
+          "table_id": {
+            "type": "string",
+            "description": "L'ID de la table"
+          },
+          "records": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            },
+            "description": "Liste des enregistrements à ajouter"
+          }
+        },
+        "required": [
+          "doc_id",
+          "table_id",
+          "records"
+        ]
+      },
+      "sortie": {
+        "type": "object"
+      },
+      "nature": "pure",
+      "ecrit": "des enregistrements",
+      "exemples": [
+        {
+          "titre": "Appel minimal",
+          "entree": {
+            "doc_id": "abc123",
+            "table_id": "Taches",
+            "records": [
+              {
+                "titre": "Rédiger la doc",
+                "statut": "ouvert"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "nom": "update_grist_records",
+      "verbe": "editer",
+      "description": "Met à jour des enregistrements existants dans une table Grist.",
+      "entree": {
+        "type": "object",
+        "properties": {
+          "doc_id": {
+            "type": "string",
+            "description": "L'ID du document"
+          },
+          "table_id": {
+            "type": "string",
+            "description": "L'ID de la table"
+          },
+          "records": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            },
+            "description": "Liste des enregistrements à mettre à jour. Chaque enregistrement doit contenir un champ 'id' Exemple: [{\"id\": 1, \"nom\": \"Dupont\", \"prénom\": \"Jean\"}]"
+          }
+        },
+        "required": [
+          "doc_id",
+          "table_id",
+          "records"
+        ]
+      },
+      "sortie": {
+        "type": "object"
+      },
+      "nature": "pure",
+      "ecrit": "des enregistrements",
+      "exemples": [
+        {
+          "titre": "Appel minimal",
+          "entree": {
+            "doc_id": "abc123",
+            "table_id": "Taches",
+            "records": [
+              {
+                "id": 1,
+                "statut": "fait"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "nom": "delete_grist_records",
+      "verbe": "editer",
+      "description": "Supprime des enregistrements d'une table Grist.",
+      "entree": {
+        "type": "object",
+        "properties": {
+          "doc_id": {
+            "type": "string",
+            "description": "L'ID du document"
+          },
+          "table_id": {
+            "type": "string",
+            "description": "L'ID de la table"
+          },
+          "record_ids": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            },
+            "description": "Liste des IDs des enregistrements à supprimer"
+          }
+        },
+        "required": [
+          "doc_id",
+          "table_id",
+          "record_ids"
+        ]
+      },
+      "sortie": {
+        "type": "object"
+      },
+      "nature": "pure",
+      "ecrit": "supprime des enregistrements",
+      "exemples": [
+        {
+          "titre": "Appel minimal",
+          "entree": {
+            "doc_id": "abc123",
+            "table_id": "Taches",
+            "record_ids": [
+              1
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "nom": "filter_sql_query",
+      "verbe": "exploiter",
+      "description": "Exécute une requête SQL de filtrage sur une table Grist.",
+      "entree": {
+        "type": "object",
+        "properties": {
+          "doc_id": {
+            "type": "string",
+            "description": "ID du document"
+          },
+          "table_id": {
+            "type": "string",
+            "description": "ID de la table à requêter"
+          },
+          "columns": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Liste des colonnes à retourner (None = toutes)"
+          },
+          "where_conditions": {
+            "type": "object",
+            "description": "Dict de conditions (AND implicite entre conditions)"
+          },
+          "order_by": {
+            "type": "string",
+            "description": "Colonne de tri avec direction optionnelle (ex: \"nom DESC\")"
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Nombre max de résultats"
+          }
+        },
+        "required": [
+          "doc_id",
+          "table_id"
+        ]
+      },
+      "sortie": {
+        "type": "object"
+      },
+      "nature": "pure",
+      "ecrit": "rien",
+      "exemples": [
+        {
+          "titre": "Appel minimal",
+          "entree": {
+            "doc_id": "abc123",
+            "table_id": "Taches"
+          }
+        }
+      ]
+    },
+    {
+      "nom": "execute_sql_query",
+      "verbe": "exploiter",
+      "description": "Exécute une requête SQL personnalisée sur un document Grist.",
+      "entree": {
+        "type": "object",
+        "properties": {
+          "doc_id": {
+            "type": "string",
+            "description": "ID du document"
+          },
+          "sql_query": {
+            "type": "string",
+            "description": "Requête SQL à exécuter (SELECT uniquement)"
+          },
+          "parameters": {
+            "type": "array",
+            "items": {},
+            "description": "Liste des paramètres pour les placeholders '?' dans la requête"
+          },
+          "timeout_ms": {
+            "type": "integer",
+            "description": "Délai d'expiration en millisecondes (défaut: 1000)",
+            "default": 1000
+          }
+        },
+        "required": [
+          "doc_id",
+          "sql_query"
+        ]
+      },
+      "sortie": {
+        "type": "object"
+      },
+      "nature": "pure",
+      "ecrit": "rien",
+      "exemples": [
+        {
+          "titre": "Appel minimal",
+          "entree": {
+            "doc_id": "abc123",
+            "sql_query": "SELECT titre, statut FROM Taches WHERE statut = ?"
+          }
+        }
+      ]
+    },
+    {
+      "nom": "modify_organization",
+      "verbe": "editer",
+      "description": "Modifie les propriétés d'une organisation.",
+      "entree": {
+        "type": "object",
+        "properties": {
+          "org_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "L'ID de l'organisation à modifier"
+          },
+          "name": {
+            "type": "string",
+            "description": "Nouveau nom pour l'organisation (optionnel)"
+          }
+        },
+        "required": [
+          "org_id"
+        ]
+      },
+      "sortie": {
+        "type": "object"
+      },
+      "nature": "pure",
+      "ecrit": "une organisation",
+      "exemples": [
+        {
+          "titre": "Appel minimal",
+          "entree": {
+            "org_id": 2
+          }
+        }
+      ]
+    },
+    {
+      "nom": "delete_organization",
+      "verbe": "editer",
+      "description": "Supprime une organisation.",
+      "entree": {
+        "type": "object",
+        "properties": {
+          "org_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "L'ID de l'organisation à supprimer"
+          }
+        },
+        "required": [
+          "org_id"
+        ]
+      },
+      "sortie": {
+        "type": "object"
+      },
+      "nature": "pure",
+      "ecrit": "supprime une organisation et tout son contenu",
+      "exemples": [
+        {
+          "titre": "Appel minimal",
+          "entree": {
+            "org_id": 2
+          }
+        }
+      ]
+    },
+    {
+      "nom": "create_workspace",
+      "verbe": "creer",
+      "description": "Crée un nouvel espace de travail dans une organisation.",
+      "entree": {
+        "type": "object",
+        "properties": {
+          "org_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "L'ID de l'organisation"
+          },
+          "name": {
+            "type": "string",
+            "description": "Nom du nouvel espace de travail"
+          }
+        },
+        "required": [
+          "org_id",
+          "name"
+        ]
+      },
+      "sortie": {
+        "type": "object"
+      },
+      "nature": "pure",
+      "ecrit": "un espace de travail",
+      "exemples": [
+        {
+          "titre": "Appel minimal",
+          "entree": {
+            "org_id": 2,
+            "name": "Projets 2026"
+          }
+        }
+      ]
+    },
+    {
+      "nom": "modify_workspace",
+      "verbe": "editer",
+      "description": "Modifie les propriétés d'un espace de travail.",
+      "entree": {
+        "type": "object",
+        "properties": {
+          "workspace_id": {
+            "type": "integer",
+            "description": "L'ID de l'espace de travail à modifier"
+          },
+          "name": {
+            "type": "string",
+            "description": "Nouveau nom pour l'espace de travail (optionnel)"
+          }
+        },
+        "required": [
+          "workspace_id"
+        ]
+      },
+      "sortie": {
+        "type": "object"
+      },
+      "nature": "pure",
+      "ecrit": "un espace de travail",
+      "exemples": [
+        {
+          "titre": "Appel minimal",
+          "entree": {
+            "workspace_id": 3
+          }
+        }
+      ]
+    },
+    {
+      "nom": "delete_workspace",
+      "verbe": "editer",
+      "description": "Supprime un espace de travail.",
+      "entree": {
+        "type": "object",
+        "properties": {
+          "workspace_id": {
+            "type": "integer",
+            "description": "L'ID de l'espace de travail à supprimer"
+          }
+        },
+        "required": [
+          "workspace_id"
+        ]
+      },
+      "sortie": {
+        "type": "object"
+      },
+      "nature": "pure",
+      "ecrit": "supprime un espace de travail et ses documents",
+      "exemples": [
+        {
+          "titre": "Appel minimal",
+          "entree": {
+            "workspace_id": 3
+          }
+        }
+      ]
+    },
+    {
+      "nom": "create_document",
+      "verbe": "creer",
+      "description": "Crée un nouveau document dans un espace de travail.",
+      "entree": {
+        "type": "object",
+        "properties": {
+          "workspace_id": {
+            "type": "integer",
+            "description": "L'ID de l'espace de travail"
+          },
+          "name": {
+            "type": "string",
+            "description": "Nom du nouveau document"
+          }
+        },
+        "required": [
+          "workspace_id",
+          "name"
+        ]
+      },
+      "sortie": {
+        "type": "object"
+      },
+      "nature": "pure",
+      "ecrit": "un document",
+      "exemples": [
+        {
+          "titre": "Appel minimal",
+          "entree": {
+            "workspace_id": 3,
+            "name": "Projets 2026"
+          }
+        }
+      ]
+    },
+    {
+      "nom": "modify_document",
+      "verbe": "editer",
+      "description": "Modifie les propriétés d'un document.",
+      "entree": {
+        "type": "object",
+        "properties": {
+          "doc_id": {
+            "type": "string",
+            "description": "L'ID du document à modifier"
+          },
+          "name": {
+            "type": "string",
+            "description": "Nouveau nom pour le document (optionnel)"
+          },
+          "is_pinned": {
+            "type": "boolean",
+            "description": "État d'épinglage du document (optionnel)"
+          }
+        },
+        "required": [
+          "doc_id"
+        ]
+      },
+      "sortie": {
+        "type": "object"
+      },
+      "nature": "pure",
+      "ecrit": "un document",
+      "exemples": [
+        {
+          "titre": "Appel minimal",
+          "entree": {
+            "doc_id": "abc123"
+          }
+        }
+      ]
+    },
+    {
+      "nom": "delete_document",
+      "verbe": "editer",
+      "description": "Supprime un document.",
+      "entree": {
+        "type": "object",
+        "properties": {
+          "doc_id": {
+            "type": "string",
+            "description": "L'ID du document à supprimer"
+          }
+        },
+        "required": [
+          "doc_id"
+        ]
+      },
+      "sortie": {
+        "type": "object"
+      },
+      "nature": "pure",
+      "ecrit": "supprime un document",
+      "exemples": [
+        {
+          "titre": "Appel minimal",
+          "entree": {
+            "doc_id": "abc123"
+          }
+        }
+      ]
+    },
+    {
+      "nom": "move_document",
+      "verbe": "editer",
+      "description": "Déplace un document vers un autre espace de travail.",
+      "entree": {
+        "type": "object",
+        "properties": {
+          "doc_id": {
+            "type": "string",
+            "description": "L'ID du document à déplacer"
+          },
+          "target_workspace_id": {
+            "type": "integer",
+            "description": "L'ID de l'espace de travail de destination"
+          }
+        },
+        "required": [
+          "doc_id",
+          "target_workspace_id"
+        ]
+      },
+      "sortie": {
+        "type": "object"
+      },
+      "nature": "pure",
+      "ecrit": "l'emplacement d'un document",
+      "exemples": [
+        {
+          "titre": "Appel minimal",
+          "entree": {
+            "doc_id": "abc123",
+            "target_workspace_id": 4
+          }
+        }
+      ]
+    },
+    {
+      "nom": "force_reload_document",
+      "verbe": "editer",
+      "description": "Force le rechargement d'un document.",
+      "entree": {
+        "type": "object",
+        "properties": {
+          "doc_id": {
+            "type": "string",
+            "description": "L'ID du document à recharger"
+          }
+        },
+        "required": [
+          "doc_id"
+        ]
+      },
+      "sortie": {
+        "type": "object"
+      },
+      "nature": "pure",
+      "ecrit": "recharge un document (sans modifier ses données)",
+      "exemples": [
+        {
+          "titre": "Appel minimal",
+          "entree": {
+            "doc_id": "abc123"
+          }
+        }
+      ]
+    },
+    {
+      "nom": "delete_document_history",
+      "verbe": "editer",
+      "description": "Supprime l'historique d'un document, ne conservant que les dernières actions.",
+      "entree": {
+        "type": "object",
+        "properties": {
+          "doc_id": {
+            "type": "string",
+            "description": "L'ID du document"
+          },
+          "keep": {
+            "type": "integer",
+            "description": "Nombre d'actions récentes à conserver (défaut: 1000)",
+            "default": 1000
+          }
+        },
+        "required": [
+          "doc_id"
+        ]
+      },
+      "sortie": {
+        "type": "object"
+      },
+      "nature": "pure",
+      "ecrit": "supprime l'historique d'un document",
+      "exemples": [
+        {
+          "titre": "Appel minimal",
+          "entree": {
+            "doc_id": "abc123"
+          }
+        }
+      ]
+    },
+    {
+      "nom": "create_table",
+      "verbe": "structurer",
+      "description": "Crée une nouvelle table dans un document.",
+      "entree": {
+        "type": "object",
+        "properties": {
+          "doc_id": {
+            "type": "string",
+            "description": "L'ID du document"
+          },
+          "table_id": {
+            "type": "string",
+            "description": "ID de la nouvelle table (doit être unique dans le document)"
+          },
+          "columns": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            },
+            "description": "Liste des définitions de colonnes (optionnel) Exemple: [ {\"id\": \"name\", \"type\": \"Text\", \"label\": \"Nom\"}, {\"id\": \"status\", \"type\": \"Choice\", \"choices\": [\"A\", \"B\", \"C\"]}, {\"id\": \"amount\", \"type\": \"Numeric\", \"description\": \"Montant en euros\"} ]"
+          }
+        },
+        "required": [
+          "doc_id",
+          "table_id"
+        ]
+      },
+      "sortie": {
+        "type": "object"
+      },
+      "nature": "pure",
+      "ecrit": "une table et ses colonnes",
+      "exemples": [
+        {
+          "titre": "Appel minimal",
+          "entree": {
+            "doc_id": "abc123",
+            "table_id": "Taches"
+          }
+        }
+      ]
+    },
+    {
+      "nom": "modify_table",
+      "verbe": "structurer",
+      "description": "Modifie les propriétés d'une table.",
+      "entree": {
+        "type": "object",
+        "properties": {
+          "doc_id": {
+            "type": "string",
+            "description": "L'ID du document"
+          },
+          "table_id": {
+            "type": "string",
+            "description": "L'ID actuel de la table"
+          },
+          "new_table_id": {
+            "type": "string",
+            "description": "Nouvel ID pour la table (optionnel)"
+          }
+        },
+        "required": [
+          "doc_id",
+          "table_id"
+        ]
+      },
+      "sortie": {
+        "type": "object"
+      },
+      "nature": "pure",
+      "ecrit": "l'identifiant d'une table",
+      "exemples": [
+        {
+          "titre": "Appel minimal",
+          "entree": {
+            "doc_id": "abc123",
+            "table_id": "Taches"
+          }
+        }
+      ]
+    },
+    {
+      "nom": "create_column",
+      "verbe": "structurer",
+      "description": "Crée une nouvelle colonne dans une table.",
+      "entree": {
+        "type": "object",
+        "properties": {
+          "doc_id": {
+            "type": "string",
+            "description": "L'ID du document"
+          },
+          "table_id": {
+            "type": "string",
+            "description": "L'ID de la table"
+          },
+          "column_id": {
+            "type": "string",
+            "description": "ID de la nouvelle colonne (doit être unique dans la table)"
+          },
+          "column_type": {
+            "type": "string",
+            "description": "Type de données. Types supportés: - Text, Numeric, Int, Bool, Date, DateTime - Choice, ChoiceList (avec paramètre choices) - Ref:TableId, RefList:TableId (références) - Attachments",
+            "default": "Text"
+          },
+          "label": {
+            "type": "string",
+            "description": "Libellé d'affichage de la colonne (optionnel)"
+          },
+          "formula": {
+            "type": "string",
+            "description": "Formule Python pour colonnes calculées (optionnel)"
+          },
+          "widget_options": {
+            "type": "object",
+            "description": "Options d'affichage comme dict (optionnel)"
+          },
+          "visible_col": {
+            "type": "integer",
+            "description": "colRef de la colonne à afficher pour les Ref (optionnel)"
+          },
+          "untie_col_id_from_label": {
+            "type": "boolean",
+            "description": "Dissocier l'ID du label (défaut: True)",
+            "default": true
+          },
+          "description": {
+            "type": "string",
+            "description": "Description de la colonne (optionnel)"
+          },
+          "choices": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Liste de choix pour Choice/ChoiceList (optionnel)"
+          }
+        },
+        "required": [
+          "doc_id",
+          "table_id",
+          "column_id"
+        ]
+      },
+      "sortie": {
+        "type": "object"
+      },
+      "nature": "pure",
+      "ecrit": "une colonne",
+      "exemples": [
+        {
+          "titre": "Appel minimal",
+          "entree": {
+            "doc_id": "abc123",
+            "table_id": "Taches",
+            "column_id": "statut"
+          }
+        }
+      ]
+    },
+    {
+      "nom": "modify_column",
+      "verbe": "structurer",
+      "description": "Modifie les propriétés d'une colonne.",
+      "entree": {
+        "type": "object",
+        "properties": {
+          "doc_id": {
+            "type": "string",
+            "description": "L'ID du document"
+          },
+          "table_id": {
+            "type": "string",
+            "description": "L'ID de la table"
+          },
+          "column_id": {
+            "type": "string",
+            "description": "L'ID actuel de la colonne"
+          },
+          "new_column_id": {
+            "type": "string",
+            "description": "Nouvel ID pour la colonne (optionnel)"
+          },
+          "column_type": {
+            "type": "string",
+            "description": "Nouveau type de données (optionnel)"
+          },
+          "label": {
+            "type": "string",
+            "description": "Nouveau libellé d'affichage (optionnel)"
+          },
+          "formula": {
+            "type": "string",
+            "description": "Nouvelle formule (optionnel, \"\" pour supprimer)"
+          },
+          "widget_options": {
+            "type": "object",
+            "description": "Nouvelles options d'affichage (optionnel)"
+          },
+          "visible_col": {
+            "type": "integer",
+            "description": "Nouveau colRef pour les Ref (optionnel)"
+          },
+          "untie_col_id_from_label": {
+            "type": "boolean",
+            "description": "Dissocier l'ID du label (optionnel)"
+          },
+          "description": {
+            "type": "string",
+            "description": "Nouvelle description (optionnel)"
+          }
+        },
+        "required": [
+          "doc_id",
+          "table_id",
+          "column_id"
+        ]
+      },
+      "sortie": {
+        "type": "object"
+      },
+      "nature": "pure",
+      "ecrit": "une colonne",
+      "exemples": [
+        {
+          "titre": "Appel minimal",
+          "entree": {
+            "doc_id": "abc123",
+            "table_id": "Taches",
+            "column_id": "statut"
+          }
+        }
+      ]
+    },
+    {
+      "nom": "delete_column",
+      "verbe": "structurer",
+      "description": "Supprime une colonne d'une table.",
+      "entree": {
+        "type": "object",
+        "properties": {
+          "doc_id": {
+            "type": "string",
+            "description": "L'ID du document"
+          },
+          "table_id": {
+            "type": "string",
+            "description": "L'ID de la table"
+          },
+          "column_id": {
+            "type": "string",
+            "description": "L'ID de la colonne à supprimer"
+          }
+        },
+        "required": [
+          "doc_id",
+          "table_id",
+          "column_id"
+        ]
+      },
+      "sortie": {
+        "type": "object"
+      },
+      "nature": "pure",
+      "ecrit": "supprime une colonne et ses données",
+      "exemples": [
+        {
+          "titre": "Appel minimal",
+          "entree": {
+            "doc_id": "abc123",
+            "table_id": "Taches",
+            "column_id": "statut"
+          }
+        }
+      ]
+    },
+    {
+      "nom": "list_organization_access",
+      "verbe": "configurer",
+      "description": "Liste les utilisateurs ayant accès à une organisation.",
+      "entree": {
+        "type": "object",
+        "properties": {
+          "org_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "L'ID de l'organisation"
+          }
+        },
+        "required": [
+          "org_id"
+        ]
+      },
+      "sortie": {
+        "type": "object"
+      },
+      "nature": "pure",
+      "ecrit": "rien",
+      "exemples": [
+        {
+          "titre": "Appel minimal",
+          "entree": {
+            "org_id": 2
+          }
+        }
+      ]
+    },
+    {
+      "nom": "modify_organization_access",
+      "verbe": "configurer",
+      "description": "Modifie l'accès d'un utilisateur à une organisation.",
+      "entree": {
+        "type": "object",
+        "properties": {
+          "org_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "L'ID de l'organisation"
+          },
+          "user_email": {
+            "type": "string",
+            "description": "Email de l'utilisateur"
+          },
+          "access_level": {
+            "type": "string",
+            "description": "Niveau d'accès (owners, editors, viewers, members, ou null pour supprimer)"
+          }
+        },
+        "required": [
+          "org_id",
+          "user_email",
+          "access_level"
+        ]
+      },
+      "sortie": {
+        "type": "object"
+      },
+      "nature": "pure",
+      "ecrit": "les droits d'accès d'une organisation",
+      "exemples": [
+        {
+          "titre": "Appel minimal",
+          "entree": {
+            "org_id": 2,
+            "user_email": "quelquun@exemple.fr",
+            "access_level": "editors"
+          }
+        }
+      ]
+    },
+    {
+      "nom": "list_workspace_access",
+      "verbe": "configurer",
+      "description": "Liste les utilisateurs ayant accès à un espace de travail.",
+      "entree": {
+        "type": "object",
+        "properties": {
+          "workspace_id": {
+            "type": "integer",
+            "description": "L'ID de l'espace de travail"
+          }
+        },
+        "required": [
+          "workspace_id"
+        ]
+      },
+      "sortie": {
+        "type": "object"
+      },
+      "nature": "pure",
+      "ecrit": "rien",
+      "exemples": [
+        {
+          "titre": "Appel minimal",
+          "entree": {
+            "workspace_id": 3
+          }
+        }
+      ]
+    },
+    {
+      "nom": "modify_workspace_access",
+      "verbe": "configurer",
+      "description": "Modifie l'accès d'un utilisateur à un espace de travail.",
+      "entree": {
+        "type": "object",
+        "properties": {
+          "workspace_id": {
+            "type": "integer",
+            "description": "L'ID de l'espace de travail"
+          },
+          "user_email": {
+            "type": "string",
+            "description": "Email de l'utilisateur"
+          },
+          "access_level": {
+            "type": "string",
+            "description": "Niveau d'accès (owners, editors, viewers, ou null pour supprimer)"
+          }
+        },
+        "required": [
+          "workspace_id",
+          "user_email",
+          "access_level"
+        ]
+      },
+      "sortie": {
+        "type": "object"
+      },
+      "nature": "pure",
+      "ecrit": "les droits d'accès d'un espace de travail",
+      "exemples": [
+        {
+          "titre": "Appel minimal",
+          "entree": {
+            "workspace_id": 3,
+            "user_email": "quelquun@exemple.fr",
+            "access_level": "editors"
+          }
+        }
+      ]
+    },
+    {
+      "nom": "list_document_access",
+      "verbe": "configurer",
+      "description": "Liste les utilisateurs ayant accès à un document.",
+      "entree": {
+        "type": "object",
+        "properties": {
+          "doc_id": {
+            "type": "string",
+            "description": "L'ID du document"
+          }
+        },
+        "required": [
+          "doc_id"
+        ]
+      },
+      "sortie": {
+        "type": "object"
+      },
+      "nature": "pure",
+      "ecrit": "rien",
+      "exemples": [
+        {
+          "titre": "Appel minimal",
+          "entree": {
+            "doc_id": "abc123"
+          }
+        }
+      ]
+    },
+    {
+      "nom": "modify_document_access",
+      "verbe": "configurer",
+      "description": "Modifie l'accès d'un utilisateur à un document.",
+      "entree": {
+        "type": "object",
+        "properties": {
+          "doc_id": {
+            "type": "string",
+            "description": "L'ID du document"
+          },
+          "user_email": {
+            "type": "string",
+            "description": "Email de l'utilisateur"
+          },
+          "access_level": {
+            "type": "string",
+            "description": "Niveau d'accès (owners, editors, viewers, ou null pour supprimer)"
+          }
+        },
+        "required": [
+          "doc_id",
+          "user_email",
+          "access_level"
+        ]
+      },
+      "sortie": {
+        "type": "object"
+      },
+      "nature": "pure",
+      "ecrit": "les droits d'accès d'un document",
+      "exemples": [
+        {
+          "titre": "Appel minimal",
+          "entree": {
+            "doc_id": "abc123",
+            "user_email": "quelquun@exemple.fr",
+            "access_level": "editors"
+          }
+        }
+      ]
+    },
+    {
+      "nom": "download_document_sqlite",
+      "verbe": "exploiter",
+      "description": "Télécharge un document Grist au format SQLite.",
+      "entree": {
+        "type": "object",
+        "properties": {
+          "doc_id": {
+            "type": "string",
+            "description": "L'ID du document"
+          },
+          "nohistory": {
+            "type": "boolean",
+            "description": "Si True, exclut l'historique des modifications",
+            "default": false
+          },
+          "template": {
+            "type": "boolean",
+            "description": "Si True, télécharge comme modèle (sans données utilisateur)",
+            "default": false
+          }
+        },
+        "required": [
+          "doc_id"
+        ]
+      },
+      "sortie": {
+        "type": "object"
+      },
+      "nature": "pure",
+      "ecrit": "rien",
+      "exemples": [
+        {
+          "titre": "Appel minimal",
+          "entree": {
+            "doc_id": "abc123"
+          }
+        }
+      ]
+    },
+    {
+      "nom": "download_document_excel",
+      "verbe": "exploiter",
+      "description": "Télécharge un document Grist au format Excel.",
+      "entree": {
+        "type": "object",
+        "properties": {
+          "doc_id": {
+            "type": "string",
+            "description": "L'ID du document"
+          },
+          "table_id": {
+            "type": "string",
+            "description": "L'ID de la table à exporter (optionnel, première table par défaut)"
+          },
+          "header": {
+            "type": "string",
+            "description": "Format des en-têtes (label, id, ou none)",
+            "default": "label"
+          }
+        },
+        "required": [
+          "doc_id"
+        ]
+      },
+      "sortie": {
+        "type": "object"
+      },
+      "nature": "pure",
+      "ecrit": "rien",
+      "exemples": [
+        {
+          "titre": "Appel minimal",
+          "entree": {
+            "doc_id": "abc123"
+          }
+        }
+      ]
+    },
+    {
+      "nom": "download_table_csv",
+      "verbe": "exploiter",
+      "description": "Télécharge une table Grist au format CSV.",
+      "entree": {
+        "type": "object",
+        "properties": {
+          "doc_id": {
+            "type": "string",
+            "description": "L'ID du document"
+          },
+          "table_id": {
+            "type": "string",
+            "description": "L'ID de la table"
+          },
+          "header": {
+            "type": "string",
+            "description": "Format des en-têtes (label, id, ou none)",
+            "default": "label"
+          }
+        },
+        "required": [
+          "doc_id",
+          "table_id"
+        ]
+      },
+      "sortie": {
+        "type": "object"
+      },
+      "nature": "pure",
+      "ecrit": "rien",
+      "exemples": [
+        {
+          "titre": "Appel minimal",
+          "entree": {
+            "doc_id": "abc123",
+            "table_id": "Taches"
+          }
+        }
+      ]
+    },
+    {
+      "nom": "list_attachments",
+      "verbe": "exploiter",
+      "description": "Liste les pièces jointes d'un document Grist.",
+      "entree": {
+        "type": "object",
+        "properties": {
+          "doc_id": {
+            "type": "string",
+            "description": "L'ID du document"
+          },
+          "sort": {
+            "type": "string",
+            "description": "Colonne de tri (optionnel)"
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Nombre maximum de résultats (optionnel)"
+          }
+        },
+        "required": [
+          "doc_id"
+        ]
+      },
+      "sortie": {
+        "type": "object"
+      },
+      "nature": "pure",
+      "ecrit": "rien",
+      "exemples": [
+        {
+          "titre": "Appel minimal",
+          "entree": {
+            "doc_id": "abc123"
+          }
+        }
+      ]
+    },
+    {
+      "nom": "get_attachment_info",
+      "verbe": "exploiter",
+      "description": "Obtient les métadonnées d'une pièce jointe.",
+      "entree": {
+        "type": "object",
+        "properties": {
+          "doc_id": {
+            "type": "string",
+            "description": "L'ID du document"
+          },
+          "attachment_id": {
+            "type": "integer",
+            "description": "L'ID de la pièce jointe"
+          }
+        },
+        "required": [
+          "doc_id",
+          "attachment_id"
+        ]
+      },
+      "sortie": {
+        "type": "object"
+      },
+      "nature": "pure",
+      "ecrit": "rien",
+      "exemples": [
+        {
+          "titre": "Appel minimal",
+          "entree": {
+            "doc_id": "abc123",
+            "attachment_id": 1
+          }
+        }
+      ]
+    },
+    {
+      "nom": "download_attachment",
+      "verbe": "exploiter",
+      "description": "Télécharge le contenu d'une pièce jointe.",
+      "entree": {
+        "type": "object",
+        "properties": {
+          "doc_id": {
+            "type": "string",
+            "description": "L'ID du document"
+          },
+          "attachment_id": {
+            "type": "integer",
+            "description": "L'ID de la pièce jointe"
+          }
+        },
+        "required": [
+          "doc_id",
+          "attachment_id"
+        ]
+      },
+      "sortie": {
+        "type": "object"
+      },
+      "nature": "pure",
+      "ecrit": "rien",
+      "exemples": [
+        {
+          "titre": "Appel minimal",
+          "entree": {
+            "doc_id": "abc123",
+            "attachment_id": 1
+          }
+        }
+      ]
+    },
+    {
+      "nom": "upload_attachment",
+      "verbe": "editer",
+      "description": "Téléverse une pièce jointe dans un document Grist.",
+      "entree": {
+        "type": "object",
+        "properties": {
+          "doc_id": {
+            "type": "string",
+            "description": "L'ID du document"
+          },
+          "filename": {
+            "type": "string",
+            "description": "Nom du fichier"
+          },
+          "content_base64": {
+            "type": "string",
+            "description": "Contenu du fichier encodé en base64"
+          },
+          "content_type": {
+            "type": "string",
+            "description": "Type MIME du fichier",
+            "default": "application/octet-stream"
+          }
+        },
+        "required": [
+          "doc_id",
+          "filename",
+          "content_base64"
+        ]
+      },
+      "sortie": {
+        "type": "object"
+      },
+      "nature": "pure",
+      "ecrit": "une pièce jointe",
+      "exemples": [
+        {
+          "titre": "Appel minimal",
+          "entree": {
+            "doc_id": "abc123",
+            "filename": "note.txt",
+            "content_base64": "Qm9uam91cg=="
+          }
+        }
+      ]
+    },
+    {
+      "nom": "list_webhooks",
+      "verbe": "configurer",
+      "description": "Liste les webhooks d'un document Grist.",
+      "entree": {
+        "type": "object",
+        "properties": {
+          "doc_id": {
+            "type": "string",
+            "description": "L'ID du document"
+          }
+        },
+        "required": [
+          "doc_id"
+        ]
+      },
+      "sortie": {
+        "type": "object"
+      },
+      "nature": "pure",
+      "ecrit": "rien",
+      "exemples": [
+        {
+          "titre": "Appel minimal",
+          "entree": {
+            "doc_id": "abc123"
+          }
+        }
+      ]
+    },
+    {
+      "nom": "create_webhook",
+      "verbe": "configurer",
+      "description": "Crée un webhook pour un document Grist.",
+      "entree": {
+        "type": "object",
+        "properties": {
+          "doc_id": {
+            "type": "string",
+            "description": "L'ID du document"
+          },
+          "url": {
+            "type": "string",
+            "description": "URL du webhook (où les notifications seront envoyées)"
+          },
+          "table_id": {
+            "type": "string",
+            "description": "ID de la table à surveiller (optionnel, tous si non spécifié)"
+          },
+          "event_types": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Types d'événements à surveiller (optionnel, tous si non spécifié) Valeurs possibles: [\"add\", \"update\", \"delete\"]"
+          },
+          "memo": {
+            "type": "string",
+            "description": "Note descriptive pour le webhook (optionnel)"
+          }
+        },
+        "required": [
+          "doc_id",
+          "url"
+        ]
+      },
+      "sortie": {
+        "type": "object"
+      },
+      "nature": "pure",
+      "ecrit": "un webhook",
+      "exemples": [
+        {
+          "titre": "Appel minimal",
+          "entree": {
+            "doc_id": "abc123",
+            "url": "https://exemple.fr/webhook"
+          }
+        }
+      ]
+    },
+    {
+      "nom": "modify_webhook",
+      "verbe": "configurer",
+      "description": "Modifie un webhook existant.",
+      "entree": {
+        "type": "object",
+        "properties": {
+          "doc_id": {
+            "type": "string",
+            "description": "L'ID du document"
+          },
+          "webhook_id": {
+            "type": "string",
+            "description": "L'ID du webhook à modifier"
+          },
+          "url": {
+            "type": "string",
+            "description": "Nouvelle URL du webhook (optionnel)"
+          },
+          "table_id": {
+            "type": "string",
+            "description": "Nouvel ID de table à surveiller (optionnel)"
+          },
+          "event_types": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Nouveaux types d'événements à surveiller (optionnel)"
+          },
+          "memo": {
+            "type": "string",
+            "description": "Nouvelle note descriptive (optionnel)"
+          },
+          "active": {
+            "type": "boolean",
+            "description": "État d'activation du webhook (optionnel)"
+          }
+        },
+        "required": [
+          "doc_id",
+          "webhook_id"
+        ]
+      },
+      "sortie": {
+        "type": "object"
+      },
+      "nature": "pure",
+      "ecrit": "un webhook",
+      "exemples": [
+        {
+          "titre": "Appel minimal",
+          "entree": {
+            "doc_id": "abc123",
+            "webhook_id": "e1f2a3b4"
+          }
+        }
+      ]
+    },
+    {
+      "nom": "delete_webhook",
+      "verbe": "configurer",
+      "description": "Supprime un webhook.",
+      "entree": {
+        "type": "object",
+        "properties": {
+          "doc_id": {
+            "type": "string",
+            "description": "L'ID du document"
+          },
+          "webhook_id": {
+            "type": "string",
+            "description": "L'ID du webhook à supprimer"
+          }
+        },
+        "required": [
+          "doc_id",
+          "webhook_id"
+        ]
+      },
+      "sortie": {
+        "type": "object"
+      },
+      "nature": "pure",
+      "ecrit": "supprime un webhook",
+      "exemples": [
+        {
+          "titre": "Appel minimal",
+          "entree": {
+            "doc_id": "abc123",
+            "webhook_id": "e1f2a3b4"
+          }
+        }
+      ]
+    },
+    {
+      "nom": "clear_webhook_queue",
+      "verbe": "configurer",
+      "description": "Vide la file d'attente des webhooks pour un document.",
+      "entree": {
+        "type": "object",
+        "properties": {
+          "doc_id": {
+            "type": "string",
+            "description": "L'ID du document"
+          }
+        },
+        "required": [
+          "doc_id"
+        ]
+      },
+      "sortie": {
+        "type": "object"
+      },
+      "nature": "pure",
+      "ecrit": "vide la file d'attente des webhooks",
+      "exemples": [
+        {
+          "titre": "Appel minimal",
+          "entree": {
+            "doc_id": "abc123"
+          }
+        }
+      ]
+    },
+    {
+      "nom": "create_reference_column",
+      "verbe": "structurer",
+      "description": "Crée une colonne de référence qui affiche la colonne choisie de la table cible.",
+      "entree": {
+        "type": "object",
+        "properties": {
+          "doc_id": {
+            "type": "string",
+            "description": "L'ID du document"
+          },
+          "table_id": {
+            "type": "string",
+            "description": "L'ID de la table source"
+          },
+          "column_id": {
+            "type": "string",
+            "description": "ID de la nouvelle colonne de référence"
+          },
+          "target_table": {
+            "type": "string",
+            "description": "ID de la table cible"
+          },
+          "visible_column": {
+            "type": "string",
+            "description": "ID ou libellé de la colonne à afficher (table cible)"
+          },
+          "is_list": {
+            "type": "boolean",
+            "description": "Si True, crée RefList au lieu de Ref (défaut: False)",
+            "default": false
+          },
+          "label": {
+            "type": "string",
+            "description": "Libellé d'affichage (optionnel)"
+          },
+          "reverse_column": {
+            "type": "string",
+            "description": "Si fourni, ID de la colonne inverse (RefList) créée dans target_table"
+          }
+        },
+        "required": [
+          "doc_id",
+          "table_id",
+          "column_id",
+          "target_table",
+          "visible_column"
+        ]
+      },
+      "sortie": {
+        "type": "object"
+      },
+      "nature": "pure",
+      "ecrit": "une colonne référence (et sa colonne inverse si demandé)",
+      "exemples": [
+        {
+          "titre": "Appel minimal",
+          "entree": {
+            "doc_id": "abc123",
+            "table_id": "Taches",
+            "column_id": "statut",
+            "target_table": "Projets",
+            "visible_column": "nom"
+          }
+        }
+      ]
+    },
+    {
+      "nom": "validate_schema",
+      "verbe": "structurer",
+      "description": "Valide un schéma sans le créer.",
+      "entree": {
+        "type": "object",
+        "properties": {
+          "doc_id": {
+            "type": "string",
+            "description": "L'ID du document (pour vérifier les tables existantes)"
+          },
+          "schema": {
+            "type": "object",
+            "description": "Schéma à valider (format dict)"
+          }
+        },
+        "required": [
+          "doc_id",
+          "schema"
+        ]
+      },
+      "sortie": {
+        "type": "object"
+      },
+      "nature": "pure",
+      "ecrit": "rien",
+      "exemples": [
+        {
+          "titre": "Appel minimal",
+          "entree": {
+            "doc_id": "abc123",
+            "schema": {
+              "tables": {
+                "Projets": {
+                  "columns": {
+                    "nom": "Text"
+                  }
+                },
+                "Taches": {
+                  "columns": {
+                    "titre": "Text",
+                    "projet": {
+                      "type": "Ref",
+                      "target": "Projets",
+                      "visible": "nom"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "nom": "create_schema",
+      "verbe": "structurer",
+      "description": "Crée un schéma complet avec tables, colonnes et relations.",
+      "entree": {
+        "type": "object",
+        "properties": {
+          "doc_id": {
+            "type": "string",
+            "description": "L'ID du document"
+          },
+          "schema": {
+            "type": "object",
+            "description": "Schéma complet à créer"
+          },
+          "skip_existing": {
+            "type": "boolean",
+            "description": "Si True (défaut), ignore les tables existantes. Si False, échoue sans rien créer quand une table existe déjà.",
+            "default": true
+          },
+          "insert_data": {
+            "type": "boolean",
+            "description": "Si True, insère les données définies (défaut: True)",
+            "default": true
+          }
+        },
+        "required": [
+          "doc_id",
+          "schema"
+        ]
+      },
+      "sortie": {
+        "type": "object"
+      },
+      "nature": "pure",
+      "ecrit": "des tables, colonnes, références et enregistrements",
+      "exemples": [
+        {
+          "titre": "Appel minimal",
+          "entree": {
+            "doc_id": "abc123",
+            "schema": {
+              "tables": {
+                "Projets": {
+                  "columns": {
+                    "nom": "Text"
+                  }
+                },
+                "Taches": {
+                  "columns": {
+                    "titre": "Text",
+                    "projet": {
+                      "type": "Ref",
+                      "target": "Projets",
+                      "visible": "nom"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "nom": "export_schema",
+      "verbe": "exploiter",
+      "description": "Exporte le schéma d'un document existant.",
+      "entree": {
+        "type": "object",
+        "properties": {
+          "doc_id": {
+            "type": "string",
+            "description": "L'ID du document"
+          },
+          "format": {
+            "type": "string",
+            "description": "Format d'export (\"json\", \"yaml\", \"mermaid\")",
+            "default": "json"
+          },
+          "include_data": {
+            "type": "boolean",
+            "description": "Si True, inclut les données (limité à 100 enregistrements/table)",
+            "default": false
+          }
+        },
+        "required": [
+          "doc_id"
+        ]
+      },
+      "sortie": {
+        "type": "object"
+      },
+      "nature": "pure",
+      "ecrit": "rien",
+      "exemples": [
+        {
+          "titre": "Appel minimal",
+          "entree": {
+            "doc_id": "abc123"
+          }
+        }
+      ]
+    }
+  ]
+}

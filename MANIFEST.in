@@ -1,11 +1,15 @@
 include LICENSE
 include README.md
+include README.fr.md
 include SECURITY.md
 include CONTRIBUTING.md
 include requirements.txt
 include pyproject.toml
 recursive-include src *
 recursive-include tests *
+recursive-include docs *
+recursive-include scripts *.py
+recursive-include site *
 global-exclude __pycache__
 global-exclude *.py[cod]
 global-exclude *.so
