@@ -132,11 +132,19 @@ Pour un déploiement rapide avec Docker :
 docker build -t mcp/grist-mcp-server .
 
 # Exécuter le container
-docker run -it --rm \
+docker run -i --rm \
   -e GRIST_API_KEY=votre_clé_api \
-  -e GRIST_API_HOST=https://docs.getgrist.com/api \
+  -e GRIST_API_URL=https://docs.getgrist.com/api \
   mcp/grist-mcp-server
+
+# Mode streamable-http (--host 0.0.0.0 est nécessaire dans un conteneur)
+docker run --rm -p 8000:8000 \
+  -e GRIST_API_KEY=votre_clé_api \
+  mcp/grist-mcp-server --transport streamable-http --host 0.0.0.0
 ```
+
+Sans `GRIST_API_URL`, l'image utilise `https://grist.numerique.gouv.fr/api`
+(`GRIST_API_HOST` reste accepté).
 
 ### Via Docker Compose
 
@@ -144,7 +152,7 @@ Pour déployer plusieurs modes de transport en parallèle :
 
 ```bash
 # Configurer les variables d'environnement
-cp .env.example .env
+cp .env.template .env
 # Éditer le fichier .env avec votre clé API
 
 # Lancer les services
@@ -176,8 +184,12 @@ Ajoutez ceci à votre `claude_desktop_config.json` :
     "grist-mcp": {
       "command": "python",
       "args": [
-        "-m", "grist_mcp_server"
-      ]
+        "-m", "mcp_server_grist"
+      ],
+      "env": {
+        "GRIST_API_KEY": "votre_clé_api",
+        "GRIST_API_URL": "https://docs.getgrist.com/api"
+      }
     }
   }
 }
@@ -195,7 +207,7 @@ Ajoutez ceci à votre `claude_desktop_config.json` :
         "--rm",
         "-i",
         "-e", "GRIST_API_KEY=votre_clé_api",
-        "-e", "GRIST_API_HOST=https://docs.getgrist.com/api",
+        "-e", "GRIST_API_URL=https://docs.getgrist.com/api",
         "mcp/grist-mcp-server"
       ]
     }

@@ -86,23 +86,13 @@ async def test_request_success():
 async def test_request_error_handling():
     """Teste que la méthode _request gère correctement les erreurs."""
     client = GristClient(api_key="test_key", api_url="https://test.com/api")
-    
-    # Mock du client HTTP qui lève une exception
-    mock_client = AsyncMock()
-    mock_client.request.side_effect = Exception("Test error")
-    
-    # Patch AsyncClient pour retourner notre mock
-    with patch("httpx.AsyncClient", return_value=AsyncMock(
-        __aenter__=AsyncMock(return_value=mock_client),
-        __aexit__=AsyncMock()
-    )):
-        # Le client doit gérer l'exception
-        try:
+
+    # La requête HTTP elle-même échoue (le client httpx réel est conservé ;
+    # l'ancien mock de AsyncClient ne produisait jamais l'erreur).
+    with patch.object(httpx.AsyncClient, "request", side_effect=Exception("Test error")):
+        # Le client doit convertir l'erreur en ValueError
+        with pytest.raises(ValueError, match="Test error"):
             await client._request("GET", "/test")
-            assert False, "L'exception n'a pas été levée"
-        except ValueError as e:
-            # Vérifie que l'erreur est bien convertie en ValueError
-            assert "Test error" in str(e)
 
 
 @pytest.mark.asyncio

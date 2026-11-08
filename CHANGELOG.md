@@ -7,7 +7,7 @@ et ce projet adhère au [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [0.2.2] - 2026-11-08
 
-Correctifs des outils de schéma et de colonnes, vérifiés sur une vraie
+Correctifs des outils de schéma et de colonnes, du démarrage et de Docker, vérifiés sur une vraie
 instance Grist (grist-core 1.7.22, et 1.1.10 pour la compatibilité).
 Aucun paramètre d'outil ne change ; les réponses gagnent seulement des
 clés (`warnings`, `columns`, `reverse_column.two_way`).
@@ -39,10 +39,31 @@ clés (`warnings`, `columns`, `reverse_column.two_way`).
 - **`create_reference_column`** : une erreur d'accès à l'API (clé, réseau) n'est plus
   présentée comme « table cible inexistante » ; la table source est vérifiée.
 
+- **Démarrage / arrêt du serveur** : le mode stdio ne plante plus à l'arrêt, et le mode
+  `sse` démarre (il échouait sur le paramètre `mount_path`, inconnu de FastMCP).
+- **Image Docker** (ticket #14) : le paquet est installé dans l'image et lancé par la
+  commande `mcp-server-grist` (auparavant : `No module named grist_mcp_server`).
+  L'image tourne sans les droits root et n'embarque plus `.env` ni `.git`.
+- **README** : configuration Claude Desktop (module `mcp_server_grist`), exemples Docker
+  (`-i` au lieu de `-it`, mode HTTP avec `--host 0.0.0.0`), fichier `.env.template`.
+- **Sécurité** : inclut le correctif d'injection SQL dans `order_by` de `filter_sql_query`
+  (fusionné après la 0.2.1, jamais publié jusqu'ici).
+
+### Modifié
+
+- Dépendance `fastmcp>=2.14,<5` (vérifiée sur 2.14, 3.0, 3.4 et 4.1 ; les versions
+  antérieures ne s'installent plus avec pydantic actuel).
+- Publication sur PyPI déclenchée par une release GitHub (et non plus par chaque push
+  sur `official`), après les tests et des contrôles de version. Voir `CONTRIBUTING.md`.
+- Workflows : suppression des doublons et fichiers obsolètes ; tests sur Python 3.10 à 3.13.
+- Tests : suppression des tests de l'ancien module `grist_mcp_server`, réécriture de
+  `test_security.py` et `test_transport.py` pour le code actuel. Suite entièrement au vert.
+
 ### Ajouté
 
 - `GristClient.apply_user_actions(doc_id, actions)` : appel de `POST /docs/{doc}/apply`.
 - Tests `tests/test_schema_tools.py`.
+- Dépendances de test : `pip install -e ".[dev]"`.
 
 ## [0.2.0] - 2024-12-30
 

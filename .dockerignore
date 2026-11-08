@@ -1,0 +1,16 @@
+# Ne jamais embarquer de secrets ni l'historique git dans l'image
+.env
+.env.*
+!.env.template
+.git
+.github
+**/__pycache__
+**/*.py[cod]
+*.egg-info
+build
+dist
+tests
+docs
+npm-wrapper
+*.tar
+*.tar.gz

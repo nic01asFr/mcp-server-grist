@@ -27,15 +27,32 @@ Merci de votre intérêt pour contribuer au Grist MCP Server ! Voici comment vou
 ## Environnement de développement
 
 1. Clonez le repository
-2. Installez les dépendances :
+2. Installez le paquet et les outils de test :
    ```bash
-   pip install -r requirements.txt
+   pip install -e ".[dev]"
    ```
 3. Créez un fichier `.env` basé sur `.env.template`
 4. Exécutez les tests :
    ```bash
-   python -m pytest
+   python -m pytest tests/
    ```
+
+## Publier une version (mainteneurs)
+
+La branche `official` est la branche de référence. Fusionner dans `official`
+ne publie rien : la publication sur PyPI se fait en créant une release GitHub.
+
+1. Dans une Pull Request vers `official` :
+   - augmentez `__version__` dans `src/mcp_server_grist/version.py` ;
+   - ajoutez une entrée dans `CHANGELOG.md`.
+2. Fusionnez la PR une fois les tests au vert.
+3. Créez une release GitHub sur `official` avec le tag `v<version>` (ex. `v0.2.2`).
+
+Le workflow `.github/workflows/workflow.yml` relance alors les tests, vérifie que
+le tag correspond à la version du code, que le commit appartient à `official` et
+que cette version n'est pas déjà sur PyPI, puis publie.
+Ne renommez pas ce fichier ni l'environnement `release` : PyPI (Trusted Publisher)
+n'accepte que ceux-là.
 
 ## Bonnes pratiques
 

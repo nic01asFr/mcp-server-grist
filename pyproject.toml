@@ -11,7 +11,7 @@ authors = [{ name = "MCP Contributors", email = "info@example.com" }]
 license = "MIT"
 requires-python = ">=3.10"
 dependencies = [
-    "fastmcp>=2.8.0",
+    "fastmcp>=2.14,<5",
     "mcp>=1.9.4",
     "httpx>=0.24.0",
     "pydantic>=2.0.0",
@@ -33,9 +33,15 @@ classifiers = [
     "Topic :: Internet",
 ]
 
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-asyncio>=0.21",
+]
+
 [project.urls]
 Homepage = "https://github.com/nic01asFr/mcp-server-grist"
-Documentation = "https://github.com/nic01asFr/mcp-server-grist/blob/main/README.md"
+Documentation = "https://github.com/nic01asFr/mcp-server-grist/blob/official/README.md"
 "Bug Reports" = "https://github.com/nic01asFr/mcp-server-grist/issues"
 Source = "https://github.com/nic01asFr/mcp-server-grist"
 
